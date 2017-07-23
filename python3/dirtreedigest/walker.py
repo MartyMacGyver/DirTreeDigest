@@ -256,7 +256,7 @@ class Walker(object):
         with dtutils.open_with_error_checking(element, 'rb') as (fileh, err):
             if err:
                 return None
-            mdf = dtdigester.digest_functions[digest_name]['func']()
+            mdf = dtdigester.digest_functions[digest_name]['entry']()
             bytes_read = 0
             while True:
                 byte_block = fileh.read(control_data['max_block_size'])

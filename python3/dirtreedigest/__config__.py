@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 
 """
 
@@ -20,9 +20,46 @@
 
 import logging
 
-# TODO: split control data?
-#   - static data OK for workers
-#   - data that workers shouldn't use
+pkg_data = {
+    'name': 'DirTreeDigest',
+    'version': '0.5.4',
+    'url': 'https://github.com/MartyMacGyver/DirTreeDigest',
+    'author': 'Martin F. Falatic',
+    'author_email': 'martin@falatic.com',
+    'copyright': 'Copyright (c) 2017',
+    'license': 'Apache License 2.0',
+    'description': 'Directory Tree Digester',
+    'long_description': '''
+A tool for generating cryptographic digests and collecting stats across a directory tree
+
+This is an **ALPHA** development release and is not considered final
+
+Currently works on Windows only (Linux/OSX development is ongoing)
+    ''',
+    'keywords': 'directory digest hashing integrity filesystem checksums',
+    'classifiers': [
+        'License :: OSI Approved :: Apache Software License',
+        'Intended Audience :: Developers',
+        'Topic :: Utilities',
+        'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: Python :: 3.6',
+        'Development Status :: 3 - Alpha',
+        #'Development Status :: 4 - Beta',
+        #'Development Status :: 5 - Production/Stable',
+    ],
+    'packages': [
+        'dirtreedigest',
+    ],
+    'entry_points': {
+        'console_scripts': [
+            'dirtreedigest=dirtreedigest.main:main',
+        ],
+    },
+    'install_requires': [],
+    'extras_require': {},
+    'package_data': {},
+    'data_files': [],
+}
 
 control_data = {
     'logfile_level': logging.DEBUG,

@@ -22,13 +22,18 @@ import sys
 import os
 import logging
 import time
-import dirtreedigest.config as dtconfig
+import dirtreedigest.__config__ as dtconfig
+#import dirtreedigest.config as dtconfig
 import dirtreedigest.utils as dtutils
 import dirtreedigest.walker as dtwalker
 import dirtreedigest.digester as dtdigester
 
 def main():
     control_data = dtconfig.control_data
+    pkg_data = dtconfig.pkg_data
+
+    print(pkg_data['name'], pkg_data['version'])
+    print()
 
     if not(len(sys.argv) > 1 and sys.argv[1] != ''):
         return
