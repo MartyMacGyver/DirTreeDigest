@@ -76,7 +76,7 @@ class Walker(object):
             else:
                 control_data['buffer_blocks'].append([None])
             control_data['buffer_sizes'].append(0)
-        for i in range(len(control_data['valid_digests'])):
+        for i in range(len(control_data['selected_digests'])):
             control_data['q_work_units'].append(multiprocessing.JoinableQueue())
             control_data['p_worker_procs'].append(multiprocessing.Process(
                 target=dtworker.worker_process,
@@ -102,7 +102,7 @@ class Walker(object):
             retval = control_data['q_results'].get(True)
             self.logger.debug('Draining queue: %s', retval)
         while any(control_data['p_worker_procs']):
-            for i in range(len(control_data['valid_digests'])):
+            for i in range(len(control_data['selected_digests'])):
                 if (control_data['p_worker_procs'][i] is not None) and (not control_data['p_worker_procs'][i].is_alive()):
                     self.logger.debug(
                         'join %d (state = %s) at %f',
@@ -199,12 +199,12 @@ class Walker(object):
         if self.is_win_symlink(element):
             elem_data['type'] = 'J'
             alt_digest = '?'*alt_digest_len
-            sorted_digests = dtdigester.default_digests(control_data, 'x')
+            sorted_digests = dtdigester.fill_digest_str(control_data, 'x')
         elif stat.S_ISDIR(stats.st_mode):
             elem_data['type'] = 'D'
             elem_data['size'] = 0
             alt_digest = '-'*alt_digest_len
-            sorted_digests = dtdigester.default_digests(control_data, '-')
+            sorted_digests = dtdigester.fill_digest_str(control_data, '-')
             control_data['counts']['dirs'] += 1
         elif stat.S_ISREG(stats.st_mode):
             elem_data['type'] = 'F'
@@ -218,11 +218,11 @@ class Walker(object):
             else:
                 self.logger.warning('F Problems processing %s', element)
                 control_data['counts']['errors'] += 1
-                sorted_digests = dtdigester.default_digests(control_data, '!')
+                sorted_digests = dtdigester.fill_digest_str(control_data, '!')
                 alt_digest = '!'*alt_digest_len
         else:
             elem_data['type'] = '?'
-            sorted_digests = dtdigester.default_digests(control_data, '?')
+            sorted_digests = dtdigester.fill_digest_str(control_data, '?')
         file_details = '{};{};{:08x};{:08x};{:08x};{:04x};{:04x};{:010x};{}'.format(
             elem_data['type'],
             sorted_digests,

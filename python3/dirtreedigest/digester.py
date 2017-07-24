@@ -34,77 +34,29 @@ class CsumNoop(object):
     def hexdigest(self):
         return '{0:0{1}x}'.format(self.checksum, 8)
 
-class CsumNoop1(object):
+class CsumNoop1(CsumNoop):
     name = 'noop1'
-    def __init__(self):
-        self.checksum = 0
-    def update(self, msg):
-        pass
-    def hexdigest(self):
-        return '{0:0{1}x}'.format(self.checksum, 8)
 
-class CsumNoop2(object):
+class CsumNoop2(CsumNoop):
     name = 'noop2'
-    def __init__(self):
-        self.checksum = 0
-    def update(self, msg):
-        pass
-    def hexdigest(self):
-        return '{0:0{1}x}'.format(self.checksum, 8)
 
-class CsumNoop3(object):
+class CsumNoop3(CsumNoop):
     name = 'noop3'
-    def __init__(self):
-        self.checksum = 0
-    def update(self, msg):
-        pass
-    def hexdigest(self):
-        return '{0:0{1}x}'.format(self.checksum, 8)
 
-class CsumNoop4(object):
+class CsumNoop4(CsumNoop):
     name = 'noop4'
-    def __init__(self):
-        self.checksum = 0
-    def update(self, msg):
-        pass
-    def hexdigest(self):
-        return '{0:0{1}x}'.format(self.checksum, 8)
 
-class CsumNoop5(object):
+class CsumNoop5(CsumNoop):
     name = 'noop5'
-    def __init__(self):
-        self.checksum = 0
-    def update(self, msg):
-        pass
-    def hexdigest(self):
-        return '{0:0{1}x}'.format(self.checksum, 8)
 
-class CsumNoop6(object):
+class CsumNoop6(CsumNoop):
     name = 'noop6'
-    def __init__(self):
-        self.checksum = 0
-    def update(self, msg):
-        pass
-    def hexdigest(self):
-        return '{0:0{1}x}'.format(self.checksum, 8)
 
-class CsumNoop7(object):
+class CsumNoop7(CsumNoop):
     name = 'noop7'
-    def __init__(self):
-        self.checksum = 0
-    def update(self, msg):
-        pass
-    def hexdigest(self):
-        return '{0:0{1}x}'.format(self.checksum, 8)
 
-class CsumNoop8(object):
+class CsumNoop8(CsumNoop):
     name = 'noop8'
-    def __init__(self):
-        self.checksum = 0
-    def update(self, msg):
-        pass
-    def hexdigest(self):
-        return '{0:0{1}x}'.format(self.checksum, 8)
 
 class CsumAdler32(object):
     name = 'adler32'
@@ -154,11 +106,13 @@ digest_functions = {
 }
 # pylint: enable=bad-whitespace, no-member
 
-def get_digest_list(control_data):
+def validate_digests(control_data):
     ''' returns list of available digests '''
     logger = logging.getLogger('digester')
-    digests_available = set(digest_functions.keys()) & set(control_data['given_digests'])
-    digests_not_found = set(control_data['given_digests']) - digests_available
+    if not control_data['selected_digests']:
+        return None
+    digests_available = set(digest_functions.keys()) & set(control_data['selected_digests'])
+    digests_not_found = set(control_data['selected_digests']) - digests_available
     if digests_not_found:
         logger.warning('Warning: invalid digest(s): %s', digests_not_found)
     digest_list = sorted(list(digests_available))
@@ -170,15 +124,15 @@ def get_digest_list(control_data):
     logger.debug('Digests: %s', digest_list)
     return digest_list
 
-def default_digests(control_data, fillchar='-'):
-    return '{' + ', '.join('{}: {}'.format(i, fillchar*digest_functions[i]['len']) for i in sorted(control_data['valid_digests'])) + '}'
+def fill_digest_str(control_data, fillchar='-'):
+    return '{' + ', '.join('{}: {}'.format(i, fillchar*digest_functions[i]['len']) for i in sorted(control_data['selected_digests'])) + '}'
 
 def digest_file(control_data, element):
     logger = logging.getLogger('digester')
     start_time = dtutils.curr_time_secs()
     logger.debug('process_file(%s)', element)
     curr_buffer_index = next_buffer_index = 0
-    total_jobs = len(control_data['valid_digests'])
+    total_jobs = len(control_data['selected_digests'])
     buffers_in_use = 0
     active_jobs = 0
     bytes_read = 0
@@ -190,7 +144,7 @@ def digest_file(control_data, element):
         if err:
             return None
         for i, q_work_unit in enumerate(control_data['q_work_units']):
-            digest_name = control_data['valid_digests'][i]
+            digest_name = control_data['selected_digests'][i]
             digest_func = digest_functions[digest_name]['entry']
             q_work_unit.put((
                 dtworker.WorkerSignal.INIT,
@@ -248,13 +202,16 @@ def digest_file(control_data, element):
                     # We always need at least one buffered item if not eof
                     if not found_eof:
                         new_buffer_index = (next_buffer_index + 1) % control_data['max_buffers']
-                        if new_buffer_index != curr_buffer_index:
+                        if new_buffer_index == curr_buffer_index:
+                            if not buffer_full:
+                                logger.debug(
+                                    'prefetch buffer is currently full - bufs_in_use %d',
+                                    buffers_in_use)
+                                buffer_full = True
+                        else:
                             next_buffer_index = new_buffer_index
                             buffer_full = False
-                            if control_data['mmap_mode']:
-                                block_read = fileh.read(min(control_data['max_block_size'], file_size-bytes_read))
-                            else:
-                                block_read = fileh.read(min(control_data['max_block_size'], file_size-bytes_read))
+                            block_read = fileh.read(min(control_data['max_block_size'], file_size-bytes_read))
                             if not block_read:
                                 found_eof = True
                                 logger.debug('eof found')
@@ -272,13 +229,6 @@ def digest_file(control_data, element):
                                 'prefetched %d bytes into buffer #%d bufs_in_use %d (%s)',
                                 len(block_read), next_buffer_index,
                                 buffers_in_use, element)
-                        else:
-                            # Otherwise the ring buffer is full so we do nothing more
-                            if not buffer_full:
-                                logger.debug(
-                                    'prefetch buffer is currently full - bufs_in_use %d',
-                                    buffers_in_use)
-                                buffer_full = True
                     if not control_data['q_results'].empty():
                         break
                 dtutils.flush_debug_queue(control_data['q_debug'], logging.getLogger('worker'))
