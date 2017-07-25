@@ -19,6 +19,8 @@
 """
 
 import logging
+import re
+import os
 from contextlib import contextmanager
 import time
 from datetime import datetime
@@ -37,6 +39,52 @@ def open_with_error_checking(filename, mode='r'):
 
 def unixify_path(path):
     return path.replace('\\', '/')
+
+def compile_patterns(patterns, ignorecase=False):
+    re_pats = []
+    flags = 0
+    if ignorecase:
+        flags |= re.IGNORECASE
+    for pattern in patterns:
+        pattern = '^'+re.escape(pattern)+'$'
+        re_pats.append(re.compile(pattern, flags=flags))
+    return re_pats
+
+def elem_is_matched(root, elem, patterns):
+    elem_mod = unixify_path(os.path.normpath(elem))
+    rel_elem = get_relative_path(root, elem_mod)
+    rel_elem_parts = rel_elem.split('/')
+    for re_pat in patterns:
+        if re.match(re_pat, rel_elem):
+            return True
+    return False
+
+def split_net_drive(elem):
+    m = re.match(r"^(//[^/]+)(.*)$", elem)
+    if m:
+        return (m.group(1), m.group(2))
+    return ('', elem)
+
+def split_win_drive(elem):
+    m = re.match(r"^([a-zA-Z]:)(.*)$", elem)
+    if m:
+        return (m.group(1), m.group(2))
+    return ('', elem)
+
+def get_relative_path(root, elem):
+    matcher = r'^'+re.escape(unixify_path(root))+r'(.*)$'
+    retval = elem
+    m = re.match(matcher, elem)
+    if m:
+        retval = m.group(1)
+    if retval != '/':
+        retval = retval.strip('/')
+    return retval
+
+def compare_paths_nocase(path1, path2):
+    path1_lc = unixify_path(os.path.normpath(path1)).lower()
+    path2_lc = unixify_path(os.path.normpath(path2)).lower()
+    return path1_lc == path2_lc
 
 def unix_time_ms(dtm=None):
     if dtm is None:

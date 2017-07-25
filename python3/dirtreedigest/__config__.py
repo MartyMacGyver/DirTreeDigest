@@ -22,7 +22,7 @@ import logging
 
 pkg_data = {
     'name': 'DirTreeDigest',
-    'version': '0.5.4',
+    'version': '0.6.0',
     'url': 'https://github.com/MartyMacGyver/DirTreeDigest',
     'author': 'Martin F. Falatic',
     'author_email': 'martin@falatic.com',
@@ -78,6 +78,9 @@ control_data = {
     'max_buffers': 4,
     'max_block_size_mb': 16,
     'max_block_size': None,
+    'ignore_path_case': False,
+    'ignored_files': None,
+    'ignored_dirs': None,
     'counts': {
         'files': 0,
         'dirs': 0,
@@ -91,8 +94,6 @@ control_data = {
     'buffer_sizes': None,
     'default_digests': None,
     'selected_digests': None,
-    'ignored_files': None,
-    'ignored_dirs': None,
     'p_worker_procs': None,
     'q_work_units': None,
     'q_results': None,
@@ -136,14 +137,15 @@ control_data['default_digests'] = [
 ]
 
 control_data['ignored_files'] = [
-    '/pagefile.sys',
-    '/hiberfil.sys',
+    'pagefile.sys',
+    'hiberfil.sys',
 ]
 
 control_data['ignored_dirs'] = [
-    '/$Recycle.Bin',
-    '/Recycled',
-    '/Recycler',
-    '/System Volume Information',
-    '/Temp',
+    '$Recycle.Bin',
+    'Recycled',
+    'Recycler',
+    'System Volume Information',
+    'Temp',
+    'msdownld.tmp',
 ]

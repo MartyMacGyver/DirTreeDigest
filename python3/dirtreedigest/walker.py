@@ -64,6 +64,14 @@ class Walker(object):
         control_data['buffer_blocks'] = []
         control_data['buffer_sizes'] = []
         control_data['buffer_names'] = []
+        control_data['ignored_file_pats'] = dtutils.compile_patterns(
+            control_data['ignored_files'],
+            control_data['ignore_path_case'],
+        )
+        control_data['ignored_dir_pats'] = dtutils.compile_patterns(
+            control_data['ignored_dirs'],
+            control_data['ignore_path_case'],
+        )
         for i in range(control_data['max_buffers']):
             buffer_name = '{}{}'.format(control_data['mmap_prefix'], i)
             control_data['buffer_names'].append(buffer_name)
@@ -120,29 +128,11 @@ class Walker(object):
     def is_win_symlink(self, elem):
         return os.path.isdir(elem) and (self.get_win_filemode(elem) & self.FILE_ATTRIBUTE_REPARSE_POINT)
 
-    def split_win_drive(self, elem):
-        m = re.match(r"^([a-zA-Z]:)(.*)$", elem)
-        if m:
-            return (m.group(1), m.group(2))
-        return ('', elem)
-
-    def remove_root(self, root, elem):
-        matcher = r'^'+re.escape(dtutils.unixify_path(root))+r'(.*)$'
-        retval = elem
-        m = re.match(matcher, elem)
-        if m:
-            retval = m.group(1)
-        if retval != '/':
-            retval = retval.strip('/')
-        return retval
-
-    def compare_paths_nocase(self, path1, path2):
-        path1_mod = dtutils.unixify_path(os.path.normpath(path1)).lower()
-        path2_mod = dtutils.unixify_path(os.path.normpath(path2)).lower()
-        return path1_mod == path2_mod
-
-    def is_ignored_element(self, apath, ignored_elements):
-        return self.split_win_drive(dtutils.unixify_path(os.path.normpath(apath)))[1] in ignored_elements
+    def is_ignored_element(self, root_dir, elem, ignored_element_pats):
+        return dtutils.elem_is_matched(
+            root_dir,
+            elem,
+            ignored_element_pats)
 
     def process_tree(self, control_data):
         '''Recurse directories with callback to process things'''
@@ -165,14 +155,20 @@ class Walker(object):
             pathname = dtutils.unixify_path(os.path.join(root_dir, elem))
             stats = os.lstat(pathname)
             if stat.S_ISDIR(stats.st_mode):
-                if self.is_ignored_element(pathname, control_data['ignored_dirs']):
+                if self.is_ignored_element(
+                    root_dir,
+                    pathname,
+                    control_data['ignored_dir_pats']):
                     self.logger.info('D IGNORED %s', pathname)
                     control_data['counts']['ignored'] += 1
                     continue
                 results.append(self.visit_element(control_data, pathname, stats))
                 self._walk_tree(control_data=control_data, root_dir=pathname, callback=callback, results=results)
             elif stat.S_ISREG(stats.st_mode):
-                if self.is_ignored_element(pathname, control_data['ignored_files']):
+                if self.is_ignored_element(
+                    root_dir,
+                    pathname,
+                    control_data['ignored_file_pats']):
                     self.logger.info('F IGNORED %s', pathname)
                     control_data['counts']['ignored'] += 1
                     continue
@@ -184,7 +180,7 @@ class Walker(object):
     def visit_element(self, control_data, element, stats):
         root_dir = control_data['root_dir']
         elem_data = {}
-        elem_data['name'] = self.remove_root(root_dir, dtutils.unixify_path(element))
+        elem_data['name'] = dtutils.get_relative_path(root_dir, dtutils.unixify_path(element))
         elem_data['mode'] = stats.st_mode
         elem_data['mode_w'] = self.get_win_filemode(element)
         elem_data['size'] = stats[stat.ST_SIZE]

@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/MartyMacGyver/DirTreeDigest.svg?branch=master)](https://travis-ci.org/MartyMacGyver/DirTreeDigest)
+
 # DirtreeDigest
 
 A tool for generating cryptographic digests and collecting stats across a directory tree

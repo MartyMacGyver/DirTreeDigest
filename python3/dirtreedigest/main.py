@@ -54,10 +54,13 @@ def validate_args():
     parser.add_argument('--nomap', dest='nomap',
                         action='store_true',
                         help='don\'t use mmap internally')
-    parser.add_argument('--xfile', dest='excluded_files', metavar='FILE1[,FILE2...]',
+    parser.add_argument('--nocase', dest='nocase',
+                        action='store_true',
+                        help='case insensitive matching')
+    parser.add_argument('--xfiles', dest='excluded_files', metavar='FILE1[,FILE2...]',
                         default=None, type=str, action='append',
                         help='excluded files')
-    parser.add_argument('--xdir', dest='excluded_dirs', metavar='DIR1[,DIR2...]',
+    parser.add_argument('--xdirs', dest='excluded_dirs', metavar='DIR1[,DIR2...]',
                         default=None, type=str, action='append',
                         help='excluded directories')
     args = parser.parse_args()
@@ -91,6 +94,11 @@ def validate_args():
         control_data['mmap_mode'] = False
     control_data['mmap_prefix'] += '{}'.format(os.getpid())
     logger.info('mmap_mode: %s', control_data['mmap_mode'])
+
+    control_data['ignore_path_case'] = False
+    if args.nocase:
+        control_data['ignore_path_case'] = True
+    logger.info('ignore_path_case: %s', control_data['ignore_path_case'])
 
     if args.selected_digests:
         arg_mod = ' '.join(args.selected_digests.replace(',', ' ').split())

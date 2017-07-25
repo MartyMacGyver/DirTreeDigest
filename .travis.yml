@@ -1,0 +1,25 @@
+language: python
+
+branches:
+    only:
+        - master
+        - /\d+\.\d+\.x/
+        - /\d+\.\d+(\.\d+)?/
+
+python:
+  - 3.5
+  - 3.6
+  - nightly
+  - pypy3
+
+# command to install dependencies
+install:
+  - cd python3
+  - pip install .
+#  - pip install -r requirements.txt
+
+# command to run tests
+script:
+  - cd python3
+  - pytest
+
