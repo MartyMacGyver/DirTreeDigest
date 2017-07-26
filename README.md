@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.org/MartyMacGyver/DirTreeDigest.svg?branch=master)](https://travis-ci.org/MartyMacGyver/DirTreeDigest)
+[![PyPi Version](http://img.shields.io/pypi/v/DirTreeDigest.svg)](https://pypi.python.org/pypi/DirTreeDigest)
+[![Travis Build Status](https://travis-ci.org/MartyMacGyver/DirTreeDigest.svg?branch=master)](https://travis-ci.org/MartyMacGyver/DirTreeDigest)
+[![License](https://img.shields.io/badge/license-Apache2.0-yellow.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 # DirtreeDigest
 
