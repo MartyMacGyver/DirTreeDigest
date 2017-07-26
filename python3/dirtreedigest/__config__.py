@@ -20,22 +20,22 @@
 
 import logging
 
-pkg_data = {
+PACKAGE_DATA = {
     'name': 'DirTreeDigest',
-    'version': '0.6.0',
+    'version': '0.6.1',
     'url': 'https://github.com/MartyMacGyver/DirTreeDigest',
     'author': 'Martin F. Falatic',
     'author_email': 'martin@falatic.com',
     'copyright': 'Copyright (c) 2017',
     'license': 'Apache License 2.0',
     'description': 'Directory Tree Digester',
-    'long_description': '''
+    'long_description': """
 A tool for generating cryptographic digests and collecting stats across a directory tree
 
 This is an **ALPHA** development release and is not considered final
 
 Currently works on Windows only (Linux/OSX development is ongoing)
-    ''',
+    """,
     'keywords': 'directory digest hashing integrity filesystem checksums',
     'classifiers': [
         'License :: OSI Approved :: Apache Software License',
@@ -61,7 +61,7 @@ Currently works on Windows only (Linux/OSX development is ongoing)
     'data_files': [],
 }
 
-control_data = {
+CONTROL_DATA = {
     'logfile_level': logging.DEBUG,
     'console_level': logging.INFO,
     'outfile_prefix': 'dtdigest',
@@ -70,8 +70,12 @@ control_data = {
     'altfile_name': None,
     'logfile_prefix': 'dtdigest',
     'logfile_ext': 'log',
-    'outfile_header': '#         Digests               |accessT |modifyT |createT |attr|watr|   size   |relative name',
-    'altfile_header': '#        {} signature          |accessT |modifyT |createT |watr|   size   |relative name',
+    'outfile_header': '#         Digests               |'+
+                      'accessT |modifyT |createT |attr|watr|'+
+                      '   size   |relative name',
+    'altfile_header': '#        {} signature          |'+
+                      'accessT |modifyT |createT |watr|'+
+                      '   size   |relative name',
     'mmap_prefix': 'SHM_',
     'mmap_mode': True,
     'max_concurrent_jobs': 32,
@@ -93,7 +97,7 @@ control_data = {
     'buffer_names': None,
     'buffer_sizes': None,
     'default_digests': None,
-    'selected_digests': None,
+    'selected_digests': [],
     'p_worker_procs': None,
     'q_work_units': None,
     'q_results': None,
@@ -101,12 +105,12 @@ control_data = {
     'root_dir': None,
 }
 
-control_data['logfile_name'] = '{}.{}'.format(
-    control_data['logfile_prefix'],
-    control_data['logfile_ext'],
+CONTROL_DATA['logfile_name'] = '{}.{}'.format(
+    CONTROL_DATA['logfile_prefix'],
+    CONTROL_DATA['logfile_ext'],
 )
 
-control_data['default_digests'] = [
+CONTROL_DATA['default_digests'] = [
     #'noop',
     #'crc32',
     #'adler32',
@@ -136,12 +140,12 @@ control_data['default_digests'] = [
     #'noop8',
 ]
 
-control_data['ignored_files'] = [
+CONTROL_DATA['ignored_files'] = [
     'pagefile.sys',
     'hiberfil.sys',
 ]
 
-control_data['ignored_dirs'] = [
+CONTROL_DATA['ignored_dirs'] = [
     '$Recycle.Bin',
     'Recycled',
     'Recycler',

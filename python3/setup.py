@@ -31,23 +31,23 @@ def read_and_exec_conf(conf_file):
     return conf
 
 config = read_and_exec_conf('dirtreedigest/__config__.py')
-pkg_info = config['pkg_data']
+package_data = config['PACKAGE_DATA']
 
 setup(
-    name=pkg_info['name'],
-    version=pkg_info['version'],
-    description=pkg_info['description'],
-    long_description=pkg_info['long_description'],
-    url=pkg_info['url'],
-    author=pkg_info['author'],
-    author_email=pkg_info['author_email'],
-    license=pkg_info['license'],
-    classifiers=pkg_info['classifiers'],
-    keywords=pkg_info['keywords'],
-    packages=pkg_info['packages'],
-    entry_points=pkg_info['entry_points'],
-    install_requires=pkg_info['install_requires'],
-    extras_require=pkg_info['extras_require'],
-    package_data=pkg_info['package_data'],
-    data_files=pkg_info['data_files'],
+    name=package_data['name'],
+    version=package_data['version'],
+    description=package_data['description'],
+    long_description=package_data['long_description'],
+    url=package_data['url'],
+    author=package_data['author'],
+    author_email=package_data['author_email'],
+    license=package_data['license'],
+    classifiers=package_data['classifiers'],
+    keywords=package_data['keywords'],
+    packages=package_data['packages'],
+    entry_points=package_data['entry_points'],
+    install_requires=package_data['install_requires'],
+    extras_require=package_data['extras_require'],
+    package_data=package_data['package_data'],
+    data_files=package_data['data_files'],
 )

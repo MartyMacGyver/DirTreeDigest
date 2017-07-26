@@ -26,58 +26,75 @@ import dirtreedigest.utils as dtutils
 import dirtreedigest.worker as dtworker
 
 class CsumNoop(object):
+    """ No-op digester """
     name = 'noop'
     def __init__(self):
         self.checksum = 0
     def update(self, msg):
+        """ Update checksum """
         pass
     def hexdigest(self):
+        """ Return digest string in hexadecimal format """
         return '{0:0{1}x}'.format(self.checksum, 8)
 
 class CsumNoop1(CsumNoop):
+    """ No-op digester """
     name = 'noop1'
 
 class CsumNoop2(CsumNoop):
+    """ No-op digester """
     name = 'noop2'
 
 class CsumNoop3(CsumNoop):
+    """ No-op digester """
     name = 'noop3'
 
 class CsumNoop4(CsumNoop):
+    """ No-op digester """
     name = 'noop4'
 
 class CsumNoop5(CsumNoop):
+    """ No-op digester """
     name = 'noop5'
 
 class CsumNoop6(CsumNoop):
+    """ No-op digester """
     name = 'noop6'
 
 class CsumNoop7(CsumNoop):
+    """ No-op digester """
     name = 'noop7'
 
 class CsumNoop8(CsumNoop):
+    """ No-op digester """
     name = 'noop8'
 
 class CsumAdler32(object):
+    """ Adler32 digester """
     name = 'adler32'
     def __init__(self):
         self.checksum = 1
     def update(self, msg):
+        """ Update checksum """
         self.checksum = zlib.adler32(msg, self.checksum)
     def hexdigest(self):
+        """ Return digest string in hexadecimal format """
         return '{0:0{1}x}'.format(self.checksum, 8)
 
 class CsumCrc32(object):
+    """ CRC32 digester """
     name = 'crc32'
     def __init__(self):
         self.checksum = 0
     def update(self, msg):
+        """ Update checksum """
         self.checksum = zlib.crc32(msg, self.checksum)
     def hexdigest(self):
+        """ Return digest string in hexadecimal format """
         return '{0:0{1}x}'.format(self.checksum, 8)
 
 # pylint: disable=bad-whitespace, no-member
-digest_functions = {
+DIGEST_FUNCTIONS = {
     'noop':       {'name': 'noop',      'len':   8, 'entry': CsumNoop},
     'noop1':      {'name': 'noop1',     'len':   8, 'entry': CsumNoop1},
     'noop2':      {'name': 'noop2',     'len':   8, 'entry': CsumNoop2},
@@ -107,11 +124,11 @@ digest_functions = {
 # pylint: enable=bad-whitespace, no-member
 
 def validate_digests(control_data):
-    ''' returns list of available digests '''
+    """ returns list of available digests """
     logger = logging.getLogger('digester')
     if not control_data['selected_digests']:
         return None
-    digests_available = set(digest_functions.keys()) & set(control_data['selected_digests'])
+    digests_available = set(DIGEST_FUNCTIONS.keys()) & set(control_data['selected_digests'])
     digests_not_found = set(control_data['selected_digests']) - digests_available
     if digests_not_found:
         logger.warning('Warning: invalid digest(s): %s', digests_not_found)
@@ -125,9 +142,13 @@ def validate_digests(control_data):
     return digest_list
 
 def fill_digest_str(control_data, fillchar='-'):
-    return '{' + ', '.join('{}: {}'.format(i, fillchar*digest_functions[i]['len']) for i in sorted(control_data['selected_digests'])) + '}'
+    """ Create a padded dummy digest value """
+    return '{' + ', '.join('{}: {}'.format(
+        i, fillchar*DIGEST_FUNCTIONS[i]['len']) for i in sorted(
+            control_data['selected_digests'])) + '}'
 
 def digest_file(control_data, element):
+    """ Digest a given element """
     logger = logging.getLogger('digester')
     start_time = dtutils.curr_time_secs()
     logger.debug('process_file(%s)', element)
@@ -145,7 +166,7 @@ def digest_file(control_data, element):
             return None
         for i, q_work_unit in enumerate(control_data['q_work_units']):
             digest_name = control_data['selected_digests'][i]
-            digest_func = digest_functions[digest_name]['entry']
+            digest_func = DIGEST_FUNCTIONS[digest_name]['entry']
             q_work_unit.put((
                 dtworker.WorkerSignal.INIT,
                 digest_func,
@@ -211,7 +232,8 @@ def digest_file(control_data, element):
                         else:
                             next_buffer_index = new_buffer_index
                             buffer_full = False
-                            block_read = fileh.read(min(control_data['max_block_size'], file_size-bytes_read))
+                            block_read = fileh.read(
+                                min(control_data['max_block_size'], file_size-bytes_read))
                             if not block_read:
                                 found_eof = True
                                 logger.debug('eof found')

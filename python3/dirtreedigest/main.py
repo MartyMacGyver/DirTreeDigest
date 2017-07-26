@@ -18,7 +18,6 @@
 
 """
 
-import sys
 import os
 import logging
 import time
@@ -28,12 +27,14 @@ import dirtreedigest.utils as dtutils
 import dirtreedigest.walker as dtwalker
 import dirtreedigest.digester as dtdigester
 
-control_data = dtconfig.control_data
-pkg_data = dtconfig.pkg_data
-logger = logging.getLogger('_main_')
 
 def validate_args():
-    parser = argparse.ArgumentParser(description=pkg_data['description'])
+    """ Validate command-line arguments """
+    control_data = dtconfig.CONTROL_DATA
+    package_data = dtconfig.PACKAGE_DATA
+    logger = logging.getLogger('_main_')
+
+    parser = argparse.ArgumentParser(description=package_data['description'])
     parser.add_argument('--root', dest='root', metavar='PATH',
                         default=None, type=str, action='store',
                         help='root directory for processing')
@@ -76,14 +77,14 @@ def validate_args():
     )
     logger.info('Log begins')
 
-    if not (1 <= args.blocksize < 1024):
+    if not 1 <= args.blocksize < 1024:
         logger.error('Block size must be >= 1MB and < 1024 MB')
         return False
     control_data['max_block_size_mb'] = args.blocksize
     control_data['max_block_size'] = args.blocksize*1024*1024
     logger.info('max_block_size: %d MB', control_data['max_block_size_mb'])
 
-    if not (2 <= args.buffers <= 32):
+    if not 2 <= args.buffers <= 32:
         logger.error('Number of buffers must be >= 2 and <= 32')
         return False
     control_data['max_buffers'] = args.buffers
@@ -145,22 +146,27 @@ def validate_args():
     return True
 
 def main():
+    """ Main entry point """
+    control_data = dtconfig.CONTROL_DATA
+    package_data = dtconfig.PACKAGE_DATA
+    logger = logging.getLogger('_main_')
+
     print()
-    print(pkg_data['name'], pkg_data['version'])
+    print(package_data['name'], package_data['version'])
     print()
 
     if not validate_args():
         return False
 
     header1 = [
-        '#{}'.format('-'*78),
+        '#{}'.format('-' * 78),
         '#',
         '#  Base path: {}'.format(control_data['root_dir']),
         '#',
-        '#{}'.format('-'*78),
+        '#{}'.format('-' * 78),
     ]
     header2 = [
-        '#{}'.format('-'*78),
+        '#{}'.format('-' * 78),
         '',
     ]
     logger.info('Main output: %s', control_data['outfile_name'])
@@ -174,18 +180,21 @@ def main():
         dtutils.outfile_write(
             control_data['altfile_name'],
             'w',
-            header1 + [control_data['altfile_header'].format(control_data['altfile_digest'])] + header2,
+            header1 +
+            [control_data['altfile_header'].format(control_data['altfile_digest'])] +
+            header2,
         )
 
     start_time = dtutils.curr_time_secs()
     logger.debug('MAINLINE starts - max_block_size=%d', control_data['max_block_size'])
     logger.debug('-;%s', dtdigester.fill_digest_str(control_data=control_data))
-    results = []
+    #results = []
     walk_item = dtwalker.Walker()
     try:
         walk_item.start_workers(control_data=control_data)
         start_walk_time = dtutils.curr_time_secs()
-        results = walk_item.process_tree(control_data=control_data)
+        #results = walk_item.process_tree(control_data=control_data)
+        walk_item.process_tree(control_data=control_data)
         end_walk_time = dtutils.curr_time_secs()
         walk_item.end_workers(control_data=control_data)
     except KeyboardInterrupt:
@@ -208,7 +217,7 @@ def main():
     )
     footer = [
         '',
-        '#{}'.format('-'*78),
+        '#{}'.format('-' * 78),
         '#',
         '#  Processed: {:,d} file(s), {:,d} folder(s) ({:,d} ignored, {:,d} errors) comprising {:,d} bytes'.format(
             control_data['counts']['files'],
@@ -218,7 +227,7 @@ def main():
             control_data['counts']['bytes_read'],
         ),
         '#',
-        '#{}'.format('-'*78),
+        '#{}'.format('-' * 78),
     ]
     dtutils.outfile_write(control_data['outfile_name'], 'a', footer)
     if control_data['altfile_digest']:

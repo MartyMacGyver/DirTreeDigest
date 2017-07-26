@@ -28,6 +28,7 @@ import logging  # For constants - do not log directly from here
 from enum import Enum
 
 class WorkerSignal(Enum):
+    """ Enums to communicate with workers """
     INIT = 0
     PROCESS = 1
     RESULT = 2
@@ -71,7 +72,8 @@ def worker_process(q_work_unit, q_results, q_debug, mmap_mode=False):
                         q_debug.put((
                             logging.DEBUG,
                             'worker_process() reading mmap -- pid={} l={} c={} d={} digest_instance={}'.format(
-                                pid, byte_block_len, byte_block[0], digest_instance.hexdigest(), mm_block_name)))
+                                pid, byte_block_len, byte_block[0],
+                                digest_instance.hexdigest(), mm_block_name)))
                     else:
                         byte_block = b''
                 else:

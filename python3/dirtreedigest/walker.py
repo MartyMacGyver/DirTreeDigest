@@ -19,7 +19,6 @@
 """
 
 import os
-import re
 import stat
 import ctypes
 import logging
@@ -31,6 +30,8 @@ import dirtreedigest.digester as dtdigester
 
 # pylint: disable=bad-whitespace
 class Walker(object):
+    """ Directory walker and supporting functions """
+
     # Windows file attributes
     FILE_ATTRIBUTE_READONLY            = 0x00001
     FILE_ATTRIBUTE_HIDDEN              = 0x00002
@@ -57,6 +58,7 @@ class Walker(object):
         self.logger = logging.getLogger('walker')
 
     def start_workers(self, control_data):
+        """ Start long-running worker processes """
         control_data['p_worker_procs'] = []
         control_data['q_work_units'] = []
         control_data['q_results'] = multiprocessing.Queue()
@@ -99,7 +101,7 @@ class Walker(object):
         # Until workers are ended, raising exceptions can hang the parent process
 
     def end_workers(self, control_data):
-        # Signal processes that they're all done
+        """ Signal processes that they're all done """
         for q_work_unit in control_data['q_work_units']:
             q_work_unit.put((
                 dtworker.WorkerSignal.QUIT,
@@ -111,7 +113,8 @@ class Walker(object):
             self.logger.debug('Draining queue: %s', retval)
         while any(control_data['p_worker_procs']):
             for i in range(len(control_data['selected_digests'])):
-                if (control_data['p_worker_procs'][i] is not None) and (not control_data['p_worker_procs'][i].is_alive()):
+                if (control_data['p_worker_procs'][i] is not None) and (
+                        not control_data['p_worker_procs'][i].is_alive()):
                     self.logger.debug(
                         'join %d (state = %s) at %f',
                         i,
@@ -123,24 +126,26 @@ class Walker(object):
         dtutils.flush_debug_queue(control_data['q_debug'], logging.getLogger('worker'))
 
     def get_win_filemode(self, elem):
+        """ Windows: get system-specific file stats """
         return ctypes.windll.kernel32.GetFileAttributesW(elem)
 
     def is_win_symlink(self, elem):
-        return os.path.isdir(elem) and (self.get_win_filemode(elem) & self.FILE_ATTRIBUTE_REPARSE_POINT)
-
-    def is_ignored_element(self, root_dir, elem, ignored_element_pats):
-        return dtutils.elem_is_matched(
-            root_dir,
-            elem,
-            ignored_element_pats)
+        """ Windows: system-specific symlink check """
+        return os.path.isdir(elem) and (
+            self.get_win_filemode(elem) & self.FILE_ATTRIBUTE_REPARSE_POINT)
 
     def process_tree(self, control_data):
-        '''Recurse directories with callback to process things'''
+        """ Process the given directory tree """
         results = []
-        self._walk_tree(control_data=control_data, root_dir=control_data['root_dir'], callback=self.visit_element, results=results)
+        self._walk_tree(
+            control_data=control_data,
+            root_dir=control_data['root_dir'],
+            callback=self.visit_element,
+            results=results)
         return results
 
     def _walk_tree(self, control_data, root_dir, callback, results):
+        """ Re-entrant directory tree walker """
         try:
             dir_list = os.listdir(root_dir)
         except FileNotFoundError:
@@ -155,20 +160,24 @@ class Walker(object):
             pathname = dtutils.unixify_path(os.path.join(root_dir, elem))
             stats = os.lstat(pathname)
             if stat.S_ISDIR(stats.st_mode):
-                if self.is_ignored_element(
-                    root_dir,
-                    pathname,
-                    control_data['ignored_dir_pats']):
+                if dtutils.elem_is_matched(
+                        root_dir,
+                        pathname,
+                        control_data['ignored_dir_pats']):
                     self.logger.info('D IGNORED %s', pathname)
                     control_data['counts']['ignored'] += 1
                     continue
                 results.append(self.visit_element(control_data, pathname, stats))
-                self._walk_tree(control_data=control_data, root_dir=pathname, callback=callback, results=results)
+                self._walk_tree(
+                    control_data=control_data,
+                    root_dir=pathname,
+                    callback=callback,
+                    results=results)
             elif stat.S_ISREG(stats.st_mode):
-                if self.is_ignored_element(
-                    root_dir,
-                    pathname,
-                    control_data['ignored_file_pats']):
+                if dtutils.elem_is_matched(
+                        root_dir,
+                        pathname,
+                        control_data['ignored_file_pats']):
                     self.logger.info('F IGNORED %s', pathname)
                     control_data['counts']['ignored'] += 1
                     continue
@@ -178,6 +187,7 @@ class Walker(object):
             dtutils.flush_debug_queue(control_data['q_debug'], logging.getLogger('worker'))
 
     def visit_element(self, control_data, element, stats):
+        """ Stat / digest a specific element found during the directory walk """
         root_dir = control_data['root_dir']
         elem_data = {}
         elem_data['name'] = dtutils.get_relative_path(root_dir, dtutils.unixify_path(element))
@@ -191,15 +201,15 @@ class Walker(object):
         elem_data['type'] = '?'
         alt_digest_len = 1
         if control_data['altfile_digest']:
-            alt_digest_len = dtdigester.digest_functions[control_data['altfile_digest']]['len']
+            alt_digest_len = dtdigester.DIGEST_FUNCTIONS[control_data['altfile_digest']]['len']
         if self.is_win_symlink(element):
             elem_data['type'] = 'J'
-            alt_digest = '?'*alt_digest_len
+            alt_digest = '?' * alt_digest_len
             sorted_digests = dtdigester.fill_digest_str(control_data, 'x')
         elif stat.S_ISDIR(stats.st_mode):
             elem_data['type'] = 'D'
             elem_data['size'] = 0
-            alt_digest = '-'*alt_digest_len
+            alt_digest = '-' * alt_digest_len
             sorted_digests = dtdigester.fill_digest_str(control_data, '-')
             control_data['counts']['dirs'] += 1
         elif stat.S_ISREG(stats.st_mode):
@@ -207,7 +217,9 @@ class Walker(object):
             elem_data['digests'] = dtdigester.digest_file(control_data, element)
             if elem_data['digests']:
                 control_data['counts']['files'] += 1
-                sorted_digests = '{' + ', '.join('{}: {}'.format(i, elem_data['digests'][i]) for i in sorted(elem_data['digests'])) + '}'
+                sorted_digests = '{' + ', '.join('{}: {}'.format(
+                    i, elem_data['digests'][i]) for i in sorted(
+                        elem_data['digests'])) + '}'
                 #self.single_process_digest_test(control_data, element)
                 if control_data['altfile_digest']:
                     alt_digest = elem_data['digests'][control_data['altfile_digest']]
@@ -215,7 +227,7 @@ class Walker(object):
                 self.logger.warning('F Problems processing %s', element)
                 control_data['counts']['errors'] += 1
                 sorted_digests = dtdigester.fill_digest_str(control_data, '!')
-                alt_digest = '!'*alt_digest_len
+                alt_digest = '!' * alt_digest_len
         else:
             elem_data['type'] = '?'
             sorted_digests = dtdigester.fill_digest_str(control_data, '?')
@@ -226,11 +238,11 @@ class Walker(object):
             elem_data['mode'], elem_data['mode_w'],
             elem_data['size'],
             elem_data['name'])
-        alt_digest = '-'*alt_digest_len
+        alt_digest = '-' * alt_digest_len
         if elem_data['type'] == 'D':
-            alt_digest = '-'*alt_digest_len
+            alt_digest = '-' * alt_digest_len
         elif not elem_data['digests']:
-            alt_digest = '?'*alt_digest_len
+            alt_digest = '?' * alt_digest_len
         elif control_data['altfile_digest']:
             alt_digest = elem_data['digests'][control_data['altfile_digest']]
         alt_details = '{};{:08x};{:08x};{:08x};{:04x};{:010x};{}'.format(
@@ -248,11 +260,12 @@ class Walker(object):
         return elem_data
 
     def single_process_digest_test(self, control_data, element):
+        """ Single-process digest for testing """
         digest_name = 'sha1'
         with dtutils.open_with_error_checking(element, 'rb') as (fileh, err):
             if err:
                 return None
-            mdf = dtdigester.digest_functions[digest_name]['entry']()
+            mdf = dtdigester.DIGEST_FUNCTIONS[digest_name]['entry']()
             bytes_read = 0
             while True:
                 byte_block = fileh.read(control_data['max_block_size'])
