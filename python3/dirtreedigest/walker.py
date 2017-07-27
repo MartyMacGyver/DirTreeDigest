@@ -19,6 +19,7 @@
 """
 
 import os
+import sys
 import stat
 import ctypes
 import logging
@@ -33,6 +34,7 @@ class Walker(object):
     """ Directory walker and supporting functions """
 
     # Windows file attributes
+    FILE_ATTRIBUTE_NONE                = 0x00000
     FILE_ATTRIBUTE_READONLY            = 0x00001
     FILE_ATTRIBUTE_HIDDEN              = 0x00002
     FILE_ATTRIBUTE_SYSTEM              = 0x00004
@@ -192,7 +194,10 @@ class Walker(object):
         elem_data = {}
         elem_data['name'] = dtutils.get_relative_path(root_dir, dtutils.unixify_path(element))
         elem_data['mode'] = stats.st_mode
-        elem_data['mode_w'] = self.get_win_filemode(element)
+        if sys.platform == 'win32':
+            elem_data['mode_w'] = self.get_win_filemode(element)
+        else:
+            elem_data['mode_w'] = self.FILE_ATTRIBUTE_NONE
         elem_data['size'] = stats[stat.ST_SIZE]
         elem_data['atime'] = stats[stat.ST_ATIME]
         elem_data['mtime'] = stats[stat.ST_MTIME]
@@ -202,7 +207,7 @@ class Walker(object):
         alt_digest_len = 1
         if control_data['altfile_digest']:
             alt_digest_len = dtdigester.DIGEST_FUNCTIONS[control_data['altfile_digest']]['len']
-        if self.is_win_symlink(element):
+        if sys.platform == 'win32' and self.is_win_symlink(element):
             elem_data['type'] = 'J'
             alt_digest = '?' * alt_digest_len
             sorted_digests = dtdigester.fill_digest_str(control_data, 'x')

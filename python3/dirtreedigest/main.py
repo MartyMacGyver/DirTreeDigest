@@ -19,6 +19,7 @@
 """
 
 import os
+import sys
 import logging
 import time
 import argparse
@@ -91,7 +92,7 @@ def validate_args():
     logger.info('max_buffers: %d', control_data['max_buffers'])
 
     control_data['mmap_mode'] = True
-    if args.nomap:
+    if args.nomap or sys.platform != 'win32':
         control_data['mmap_mode'] = False
     control_data['mmap_prefix'] += '{}'.format(os.getpid())
     logger.info('mmap_mode: %s', control_data['mmap_mode'])

@@ -12,8 +12,6 @@ Released under the Apache 2.0 license
 
 ## Overview
 
-### Note: The current release isn't ready for OS X / Linux yet
-
 This project was born of necessity many years ago to ensure the integrity of arbitrary disk data, from the data itself right down to its attributes. To do so, the first version of this tool `TreeHash` was created in Perl 5 (which is presented within for posterity and reference only). It's quite a bit of code and while it served its purpose well, it isn't Unicode-savvy and ... well, it's Perl, which I've moved away from since then. Far away. No forwarding address far away.
 
 This second iteration - in Python 3 and leveraging `multiprocessing` - performs multiple simultaneous hashes using multiple worker processes so as to hash each block of data more efficiently. As Windows is one platform I use this on a lot, `spawn` semantics and tradeoffs limit any possible benefits `fork` might provide (however, some would argue that's not such a bad thing either).
@@ -76,13 +74,10 @@ At a higher level, the architecture is straightforward:
 
   - When all files are processed, cleanly shut down the workers and exit
 
-
 ## TODO
 
-  - Linux/OS X compatibility - The memory tagging thing that works optimally in Windows won't work for these, but it's otherwise mostly a matter of adding OS detection and making the Windows-specific things toggle out as needed
-  
-  - More docstrings
-  
+  - Cleanups
+
   - More testing
-  
-  - Smaller chunks of code - now that it's working, it's time to trim out things that aren't vital for operation or debugging, and refine the code
+
+  - Linux/OS X mmap - the memory tagging trick that works optimally in Windows won't work for these, so inefficient queueing is used by default (--nomap is always active)
