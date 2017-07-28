@@ -59,6 +59,9 @@ def validate_args():
     parser.add_argument('--nocase', dest='nocase',
                         action='store_true',
                         help='case insensitive matching')
+    parser.add_argument('--debug', dest='debug',
+                        action='store_true',
+                        help='more debugging to the logfile')
     parser.add_argument('--xfiles', dest='excluded_files', metavar='FILE1[,FILE2...]',
                         default=None, type=str, action='append',
                         help='excluded files')
@@ -70,6 +73,10 @@ def validate_args():
     if not args.root:
         parser.print_help()
         return False
+
+    control_data['logfile_level'] = logging.INFO
+    if args.debug:
+        control_data['logfile_level'] = logging.DEBUG
 
     dtutils.start_logging(
         control_data['logfile_name'],

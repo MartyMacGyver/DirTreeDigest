@@ -62,7 +62,7 @@ Currently works on Windows only (Linux/OSX development is ongoing)
 }
 
 CONTROL_DATA = {
-    'logfile_level': logging.DEBUG,
+    'logfile_level': logging.INFO,
     'console_level': logging.INFO,
     'outfile_prefix': 'dtdigest',
     'outfile_ext': 'thd',
