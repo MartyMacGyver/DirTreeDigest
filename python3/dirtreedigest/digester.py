@@ -19,6 +19,7 @@
 """
 
 import os
+import sys
 import hashlib
 import zlib
 import logging
@@ -112,15 +113,19 @@ DIGEST_FUNCTIONS = {
     'sha256':     {'name': 'sha256',    'len':  64, 'entry': hashlib.sha256},
     'sha384':     {'name': 'sha384',    'len':  96, 'entry': hashlib.sha384},
     'sha512':     {'name': 'sha512',    'len': 128, 'entry': hashlib.sha512},
-    'blake2b':    {'name': 'blake2b',   'len': 128, 'entry': hashlib.blake2b},
-    'blake2s':    {'name': 'blake2s',   'len':  64, 'entry': hashlib.blake2s},
-    'sha3_224':   {'name': 'sha3_224',  'len':  56, 'entry': hashlib.sha3_224},
-    'sha3_256':   {'name': 'sha3_256',  'len':  64, 'entry': hashlib.sha3_256},
-    'sha3_384':   {'name': 'sha3_384',  'len':  96, 'entry': hashlib.sha3_384},
-    'sha3_512':   {'name': 'sha3_512',  'len': 128, 'entry': hashlib.sha3_512},
-    #'shake_128': {'name': 'shake_128', 'len':  32, 'entry': hashlib.shake_128},
-    #'shake_256': {'name': 'shake_256', 'len':  64, 'entry': hashlib.shake_256},
 }
+if sys.version_info >= (3,6):
+    DIGEST_FUNCTIONS36 = {
+        'blake2b':    {'name': 'blake2b',   'len': 128, 'entry': hashlib.blake2b},
+        'blake2s':    {'name': 'blake2s',   'len':  64, 'entry': hashlib.blake2s},
+        'sha3_224':   {'name': 'sha3_224',  'len':  56, 'entry': hashlib.sha3_224},
+        'sha3_256':   {'name': 'sha3_256',  'len':  64, 'entry': hashlib.sha3_256},
+        'sha3_384':   {'name': 'sha3_384',  'len':  96, 'entry': hashlib.sha3_384},
+        'sha3_512':   {'name': 'sha3_512',  'len': 128, 'entry': hashlib.sha3_512},
+        #'shake_128': {'name': 'shake_128', 'len':  32, 'entry': hashlib.shake_128},
+        #'shake_256': {'name': 'shake_256', 'len':  64, 'entry': hashlib.shake_256},
+    }
+    DIGEST_FUNCTIONS.update(DIGEST_FUNCTIONS36)
 # pylint: enable=bad-whitespace, no-member
 
 def validate_digests(control_data):

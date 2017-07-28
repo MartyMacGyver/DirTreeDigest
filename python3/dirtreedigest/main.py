@@ -35,7 +35,12 @@ def validate_args():
     package_data = dtconfig.PACKAGE_DATA
     logger = logging.getLogger('_main_')
 
-    parser = argparse.ArgumentParser(description=package_data['description'])
+    digest_list = sorted(dtdigester.DIGEST_FUNCTIONS.keys())
+    epilog = "Digests available: {}".format(digest_list)
+
+    parser = argparse.ArgumentParser(
+        description=package_data['description'],
+        epilog=epilog)
     parser.add_argument('--root', dest='root', metavar='PATH',
                         default=None, type=str, action='store',
                         help='root directory for processing')

@@ -22,7 +22,7 @@ import logging
 
 PACKAGE_DATA = {
     'name': 'DirTreeDigest',
-    'version': '0.6.2',
+    'version': '0.6.3',
     'url': 'https://github.com/MartyMacGyver/DirTreeDigest',
     'author': 'Martin F. Falatic',
     'author_email': 'martin@falatic.com',
@@ -32,9 +32,9 @@ PACKAGE_DATA = {
     'long_description': """
 A tool for generating cryptographic digests and collecting stats across a directory tree
 
-This is an **ALPHA** development release and is not considered final
+This is a development release and is not considered final
 
-Currently works on Windows only (Linux/OSX development is ongoing)
+Built for Windows, but works with Linux, and OSX as well
     """,
     'keywords': 'directory digest hashing integrity filesystem checksums',
     'classifiers': [
@@ -42,6 +42,8 @@ Currently works on Windows only (Linux/OSX development is ongoing)
         'Intended Audience :: Developers',
         'Topic :: Utilities',
         'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         #'Development Status :: 3 - Alpha',
         'Development Status :: 4 - Beta',

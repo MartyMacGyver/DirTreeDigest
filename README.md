@@ -6,7 +6,7 @@
 
 A tool for generating cryptographic digests and collecting stats across a directory tree
 
-## WORK IN PROGRESS - STILL UNDER TEST
+## WORK IN PROGRESS - UNDER DEVELOPMENT AND TEST
 
 Released under the Apache 2.0 license
 
@@ -60,17 +60,17 @@ At a higher level, the architecture is straightforward:
 
   - For a given file (the debug queue is read and logged periodically during this):
 
-  - - Send "init" command to each worker, telling them to reset and which digest tipe to prepare for
+    - Send "init" command to each worker, telling them to reset and which digest tipe to prepare for
 
-  - - Read the first block of the file into shared memory
+    - Read the first block of the file into shared memory
 
-  - - Over the queue, inform all workers that the named shared memory block is ready for digesting
+    - Over the queue, inform all workers that the named shared memory block is ready for digesting
 
-  - - While waiting for results, pre-fetch data into the next free buffer(s)
+    - While waiting for results, pre-fetch data into the next free buffer(s)
 
-  - - Once all workers have finished processing the data block, send them the next available block to process. Repeat.
+    - Once all workers have finished processing the data block, send them the next available block to process. Repeat.
 
-  - - When EOF is reached and cache buffers are exhausted, request final hash data from workers
+    - When EOF is reached and cache buffers are exhausted, request final hash data from workers
 
   - When all files are processed, cleanly shut down the workers and exit
 
@@ -80,4 +80,4 @@ At a higher level, the architecture is straightforward:
 
   - More testing
 
-  - Linux/OS X mmap - the memory tagging trick that works optimally in Windows won't work for these, so inefficient queueing is used by default (--nomap is always active)
+  - Linux/OS X mmap - the memory tagging trick that works optimally in Windows is different in Linux, and it's not clear how to do this in OS X yet, so less-efficient queueing is used by default  for these (--nomap is always active)
