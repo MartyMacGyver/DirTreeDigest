@@ -18,7 +18,7 @@
 
 """
 
-import dirtreedigest.main_digest as dtmaindig
+import dirtreedigest.main_compare as dtmaincmp
 
 if __name__ == '__main__':
-    dtmaindig.main()
+    dtmaincmp.main()

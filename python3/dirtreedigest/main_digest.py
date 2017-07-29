@@ -32,16 +32,15 @@ import dirtreedigest.digester as dtdigester
 def validate_args():
     """ Validate command-line arguments """
     control_data = dtconfig.CONTROL_DATA
-    package_data = dtconfig.PACKAGE_DATA
-    logger = logging.getLogger('_main_')
+    # package_data = dtconfig.PACKAGE_DATA
 
     digest_list = sorted(dtdigester.DIGEST_FUNCTIONS.keys())
     epilog = "Digests available: {}".format(digest_list)
 
     parser = argparse.ArgumentParser(
-        description=package_data['description'],
+        # description=package_data['description'],
         epilog=epilog)
-    parser.add_argument('--root', dest='root', metavar='PATH',
+    parser.add_argument('root', nargs='?', metavar='ROOTPATH',
                         default=None, type=str, action='store',
                         help='root directory for processing')
     parser.add_argument('--digests', dest='selected_digests',
@@ -52,6 +51,12 @@ def validate_args():
     parser.add_argument('--altdigest', dest='altfile_digest', metavar='DIGEST',
                         default=None, type=str, action='store',
                         help='alternate single digest report')
+    parser.add_argument('--title', dest='output_title', metavar='TITLE',
+                        default=None, type=str, action='store',
+                        help='alternate output title')
+    parser.add_argument('--tstamp', dest='output_tstamp', metavar='TIMESTAMP',
+                        default=None, type=str, action='store',
+                        help='alternate output timestamp')
     parser.add_argument('--blocksize', dest='blocksize', metavar='MBYTES',
                         default=control_data['max_block_size_mb'], type=int, action='store',
                         help='block size in MB')
@@ -83,12 +88,49 @@ def validate_args():
     if args.debug:
         control_data['logfile_level'] = logging.DEBUG
 
+    control_data['root_dir'] = dtutils.unixify_path(os.path.realpath(args.root))
+
+    control_data['outfile_suffix'] = control_data['root_dir'].replace(':', '$').replace('/', '_')
+
+    if args.output_title:
+        output_title = args.output_title
+    else:
+        output_title = '{}-{}'.format(
+            control_data['outfile_prefix'],
+            control_data['outfile_suffix'],
+        )
+
+    if args.output_tstamp:
+        output_tstamp = args.output_tstamp 
+    else:
+        output_tstamp = dtutils.datetime_as_str()
+
+    control_data['outfile_name'] = '{}.{}.{}'.format(
+        output_title,
+        output_tstamp,
+        control_data['outfile_ext'],
+    )
+
+    control_data['logfile_name'] = '{}.{}.{}'.format(
+        output_title,
+        output_tstamp,
+        control_data['logfile_ext'],
+    )
+
     dtutils.start_logging(
         control_data['logfile_name'],
         control_data['logfile_level'],
         control_data['console_level'],
     )
+
+    logger = logging.getLogger('_main_')
     logger.info('Log begins')
+
+    logger.info('Root dir (gvn): %s', args.root)
+    logger.info('Root dir (mod): %s', control_data['root_dir'])
+    if not os.path.isdir(os.path.realpath(args.root)):
+        logger.error('Root dir is not a directory / does not exist!')
+        return False
 
     if not 1 <= args.blocksize < 1024:
         logger.error('Block size must be >= 1MB and < 1024 MB')
@@ -123,10 +165,6 @@ def validate_args():
         return False
     logger.info('digests to run: %s', ', '.join(control_data['selected_digests']))
 
-    control_data['root_dir'] = dtutils.unixify_path(os.path.realpath(args.root))
-    logger.info('Root dir (gvn): %s', args.root)
-    logger.info('Root dir (mod): %s', control_data['root_dir'])
-
     if args.excluded_files:
         for val in args.excluded_files:
             control_data['ignored_files'].append(val)
@@ -137,23 +175,16 @@ def validate_args():
             control_data['ignored_dirs'].append(val)
     logger.info('ignored_dirs: %s', ', '.join(control_data['ignored_dirs']))
 
-    control_data['outfile_suffix'] = control_data['root_dir'].replace(':', '$').replace('/', '_')
-    control_data['outfile_name'] = '{}-{}.{}'.format(
-        control_data['outfile_prefix'],
-        control_data['outfile_suffix'],
-        control_data['outfile_ext'],
-    )
-
     if args.altfile_digest:
         control_data['altfile_digest'] = args.altfile_digest.lower()
         if control_data['altfile_digest'] not in control_data['selected_digests']:
             logger.error('alt digest %s must be in selected digests',
                          control_data['altfile_digest'])
             return False
-        control_data['altfile_name'] = '{}-{}.{}.{}'.format(
-            control_data['outfile_prefix'],
-            control_data['outfile_suffix'],
+        control_data['altfile_name'] = '{}.{}.{}.{}'.format(
+            output_title,
             control_data['altfile_digest'],
+            output_tstamp,
             control_data['outfile_ext'],
         )
     return True
@@ -162,14 +193,15 @@ def main():
     """ Main entry point """
     control_data = dtconfig.CONTROL_DATA
     package_data = dtconfig.PACKAGE_DATA
-    logger = logging.getLogger('_main_')
 
     print()
-    print(package_data['name'], package_data['version'])
+    print(package_data['name'], 'Digester', package_data['version'])
     print()
 
     if not validate_args():
         return False
+
+    logger = logging.getLogger('_main_')
 
     header1 = [
         '#{}'.format('-' * 78),
@@ -182,19 +214,27 @@ def main():
         '#{}'.format('-' * 78),
         '',
     ]
+
+    logger.info('Logging out: %s', control_data['logfile_name'])
     logger.info('Main output: %s', control_data['outfile_name'])
+    outfile_header = '#         Digests               |'
+    outfile_header += 'accessT |modifyT |createT |attr|watr|'
+    outfile_header += '   size   |relative name'
     dtutils.outfile_write(
         control_data['outfile_name'],
         'w',
-        header1 + [control_data['outfile_header']] + header2,
+        header1 + [outfile_header] + header2,
     )
+    altfile_header = '#        {} signature          |'
+    altfile_header += 'accessT |modifyT |createT |watr|'
+    altfile_header += '   size   |relative name'
     if control_data['altfile_digest']:
         logger.info('Alt  output: %s', control_data['altfile_name'])
         dtutils.outfile_write(
             control_data['altfile_name'],
             'w',
             header1 +
-            [control_data['altfile_header'].format(control_data['altfile_digest'])] +
+            [altfile_header.format(control_data['altfile_digest'])] +
             header2,
         )
 

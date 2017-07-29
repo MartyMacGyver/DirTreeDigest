@@ -158,8 +158,13 @@ class Walker(object):
             self.logger.warning('NotADirectoryError %s', root_dir)
             control_data['counts']['errors'] += 1
             return
+        except PermissionError:
+            self.logger.warning('PermissionError %s', root_dir)
+            control_data['counts']['errors'] += 1
+            return
         for elem in sorted(dir_list):
             pathname = dtutils.unixify_path(os.path.join(root_dir, elem))
+            print("Processing {}".format(pathname))
             stats = os.lstat(pathname)
             if stat.S_ISDIR(stats.st_mode):
                 if dtutils.elem_is_matched(

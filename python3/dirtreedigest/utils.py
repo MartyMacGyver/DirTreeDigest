@@ -38,6 +38,11 @@ def open_with_error_checking(filename, mode='r'):
         finally:
             fileh.close()
 
+def datetime_as_str(dtm=None):
+    if not dtm:
+        dtm = datetime.now()
+    return "{:%Y%m%d_%H%M%S}".format(dtm)
+
 def unixify_path(path):
     """ Convert path to Unix format """
     return path.replace('\\', '/')

@@ -22,7 +22,7 @@ import logging
 
 PACKAGE_DATA = {
     'name': 'DirTreeDigest',
-    'version': '0.6.3',
+    'version': '0.6.5',
     'url': 'https://github.com/MartyMacGyver/DirTreeDigest',
     'author': 'Martin F. Falatic',
     'author_email': 'martin@falatic.com',
@@ -30,11 +30,15 @@ PACKAGE_DATA = {
     'license': 'Apache License 2.0',
     'description': 'Directory Tree Digester',
     'long_description': """
-A tool for generating cryptographic digests and collecting stats across a directory tree
+A suite for digesting and analyzing filesystems:
+
+dirtreedigest - generates cryptographic digests and collects stats across a directory tree
+
+dirtreecmp - compare two dirtreedigest reports
 
 This is a development release and is not considered final
 
-Built for Windows, but works with Linux, and OSX as well
+For Windows, OS X and Linux
     """,
     'keywords': 'directory digest hashing integrity filesystem checksums',
     'classifiers': [
@@ -54,7 +58,8 @@ Built for Windows, but works with Linux, and OSX as well
     ],
     'entry_points': {
         'console_scripts': [
-            'dirtreedigest=dirtreedigest.main:main',
+            'dirtreedigest=dirtreedigest.main_digest:main',
+            'dirtreecmp=dirtreedigest.main_compare:main',
         ],
     },
     'install_requires': [],
@@ -70,14 +75,7 @@ CONTROL_DATA = {
     'outfile_ext': 'thd',
     'outfile_name': None,
     'altfile_name': None,
-    'logfile_prefix': 'dtdigest',
     'logfile_ext': 'log',
-    'outfile_header': '#         Digests               |'+
-                      'accessT |modifyT |createT |attr|watr|'+
-                      '   size   |relative name',
-    'altfile_header': '#        {} signature          |'+
-                      'accessT |modifyT |createT |watr|'+
-                      '   size   |relative name',
     'mmap_prefix': 'SHM_',
     'mmap_mode': True,
     'max_concurrent_jobs': 32,
@@ -106,11 +104,6 @@ CONTROL_DATA = {
     'q_debug': None,
     'root_dir': None,
 }
-
-CONTROL_DATA['logfile_name'] = '{}.{}'.format(
-    CONTROL_DATA['logfile_prefix'],
-    CONTROL_DATA['logfile_ext'],
-)
 
 CONTROL_DATA['default_digests'] = [
     #'noop',

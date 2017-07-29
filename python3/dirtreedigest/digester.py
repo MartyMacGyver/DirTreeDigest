@@ -128,6 +128,24 @@ if sys.version_info >= (3,6):
     DIGEST_FUNCTIONS.update(DIGEST_FUNCTIONS36)
 # pylint: enable=bad-whitespace, no-member
 
+''' From least to most secure, excluding noops '''
+DIGEST_PRIORITY = [
+    'crc32',
+    'adler32',
+    'md5',
+    'sha1',
+    'sha224',
+    'sha3_224',
+    'sha256',
+    'blake2s',
+    'sha3_256',
+    'sha384',
+    'sha3_384',
+    'sha512',
+    'blake2b',
+    'sha3_512',
+]
+
 def validate_digests(control_data):
     """ returns list of available digests """
     logger = logging.getLogger('digester')
