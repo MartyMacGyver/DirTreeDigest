@@ -2,7 +2,7 @@
 
 """
 
-    Copyright (c) 2017 Martin F. Falatic
+    Copyright (c) 2017-2019 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 
 from setuptools import setup
 
+
 def read_and_exec_conf(conf_file):
     conf = {}
     exec_str = ''
@@ -29,6 +30,7 @@ def read_and_exec_conf(conf_file):
         exec_str = exec_str.lstrip(u'\ufeff')
         exec(exec_str, conf)
     return conf
+
 
 config = read_and_exec_conf('dirtreedigest/__config__.py')
 package_data = config['PACKAGE_DATA']

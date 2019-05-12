@@ -2,7 +2,7 @@
 
 """
 
-    Copyright (c) 2017 Martin F. Falatic
+    Copyright (c) 2017-2019 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@
 import re
 import logging
 from collections import defaultdict
-import dirtreedigest.utils as dtutils
 import dirtreedigest.digester as dtdigester
 from enum import Enum
+
 
 class DiffType(Enum):
     M_UNDEF = 0  # Undefined (error case)
@@ -32,6 +32,7 @@ class DiffType(Enum):
     M_SFDD  = 3  # Same Full name, Diff Data (Opposite only)
     M_SNSD  = 4  # Same file Name, Same Data (Opposite and Same sides)
     M_DNSD  = 5  # Diff file Name, Same Data (Opposite and Same sides)
+
 
 class Comparator(object):
     """ Digest blob comparator and supporting functions """
@@ -129,7 +130,7 @@ class Comparator(object):
         if not len(elems1) > 0 and len(elems2) > 0:
             self.logger.error('Cannot choose a digest - not found')
             return None
-        if not 'digests' in elems1[0] and 'digests' in elems2[0]:
+        if 'digests' not in elems1[0] and 'digests' in elems2[0]:
             self.logger.error('Cannot choose a digest - not found')
             return None
         s1 = set(elems1[0]['digests'])
@@ -231,8 +232,8 @@ class Comparator(object):
             #print("checking", name)
             if digest_r in self.files_by_digest_l:
                 #print(name, digest_r)
-                matched_elems = [elem['fullname'] for elem in self.files_by_digest_l[digest_r]]
-                matched_names = ','.join(matched_elems)
+                #matched_elems = [elem['fullname'] for elem in self.files_by_digest_l[digest_r]]
+                #matched_names = ','.join(matched_elems)
                 #print("> COPIED  {} == {}".format(name, matched_names))
                 self.files_by_name_r[name]['status'] = 'copied'
                 for elem in self.files_by_digest_l[digest_r]:
@@ -255,8 +256,8 @@ class Comparator(object):
             #print("checking", name)
             if digest_l in self.files_by_digest_r:
                 #print(name, digest_l)
-                matched_elems = [elem['fullname'] for elem in self.files_by_digest_r[digest_l]]
-                matched_names = ','.join(matched_elems)
+                #matched_elems = [elem['fullname'] for elem in self.files_by_digest_r[digest_l]]
+                #matched_names = ','.join(matched_elems)
                 #print("< MOVED   {} == {}".format(name, matched_names))
                 self.files_by_name_l[name]['status'] = 'moved'
                 self.files_by_name_l[name]['match'] = self.files_by_digest_r[digest_l]

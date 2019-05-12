@@ -2,7 +2,7 @@
 
 """
 
-    Copyright (c) 2017 Martin F. Falatic
+    Copyright (c) 2017-2019 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,15 +18,11 @@
 
 """
 
-import os
-import sys
 import logging
-import time
 import argparse
 import dirtreedigest.__config__ as dtconfig
 import dirtreedigest.utils as dtutils
 import dirtreedigest.comparator as dtcompare
-import dirtreedigest.digester as dtdigester
 
 
 def validate_args():
@@ -120,6 +116,7 @@ def validate_args():
 
     return True
 
+
 def main():
     """ Main entry point """
     control_data = dtconfig.CONTROL_DATA
@@ -154,7 +151,7 @@ def main():
         'w',
         header1 + [outfile_header] + header2,
     )
-    start_time = dtutils.curr_time_secs()
+    #start_time = dtutils.curr_time_secs()
     logger.debug('MAINLINE starts')
 
     comparator = dtcompare.Comparator(control_data=control_data)
@@ -164,8 +161,8 @@ def main():
         file_r=control_data['file_r'],
     )
 
-    end_time = dtutils.curr_time_secs()
-    run_time = end_time-start_time
+    #end_time = dtutils.curr_time_secs()
+    #run_time = end_time - start_time
     footer = [
         '',
         '#{}'.format('-' * 78),

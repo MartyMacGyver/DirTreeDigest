@@ -2,7 +2,7 @@
 
 """
 
-    Copyright (c) 2017 Martin F. Falatic
+    Copyright (c) 2017-2019 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import multiprocessing
 import dirtreedigest.utils as dtutils
 import dirtreedigest.worker as dtworker
 import dirtreedigest.digester as dtdigester
+
 
 # pylint: disable=bad-whitespace
 class Walker(object):
@@ -92,11 +93,12 @@ class Walker(object):
             control_data['q_work_units'].append(multiprocessing.JoinableQueue())
             control_data['p_worker_procs'].append(multiprocessing.Process(
                 target=dtworker.worker_process,
-                args=(control_data['q_work_units'][i],
-                      control_data['q_results'],
-                      control_data['q_debug'],
-                      control_data['mmap_mode'],
-                     )
+                args=(
+                    control_data['q_work_units'][i],
+                    control_data['q_results'],
+                    control_data['q_debug'],
+                    control_data['mmap_mode'],
+                )
             ))
             #control_data['p_worker_procs'][i].daemon = True
             control_data['p_worker_procs'][i].start()
@@ -263,10 +265,12 @@ class Walker(object):
             elem_data['name'])
         self.logger.debug('%s', file_details)
         dtutils.outfile_write(control_data['outfile_name'], 'a', [
-            '{}'.format(file_details),])
+            '{}'.format(file_details),
+        ])
         if control_data['altfile_digest']:
             dtutils.outfile_write(control_data['altfile_name'], 'a', [
-                '{}'.format(alt_details),])
+                '{}'.format(alt_details),
+            ])
         return elem_data
 
     def single_process_digest_test(self, control_data, element):

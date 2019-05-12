@@ -2,7 +2,7 @@
 
 """
 
-    Copyright (c) 2017 Martin F. Falatic
+    Copyright (c) 2017-2019 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ def validate_args():
         )
 
     if args.output_tstamp:
-        output_tstamp = args.output_tstamp 
+        output_tstamp = args.output_tstamp
     else:
         output_tstamp = dtutils.datetime_as_str()
 
@@ -136,7 +136,7 @@ def validate_args():
         logger.error('Block size must be >= 1MB and < 1024 MB')
         return False
     control_data['max_block_size_mb'] = args.blocksize
-    control_data['max_block_size'] = args.blocksize*1024*1024
+    control_data['max_block_size'] = args.blocksize * 1024 * 1024
     logger.info('max_block_size: %d MB', control_data['max_block_size_mb'])
 
     if not 2 <= args.buffers <= 32:
@@ -188,6 +188,7 @@ def validate_args():
             control_data['outfile_ext'],
         )
     return True
+
 
 def main():
     """ Main entry point """
@@ -260,12 +261,12 @@ def main():
     #pprint(results)
     #print()
     end_time = dtutils.curr_time_secs()
-    run_time = end_time-start_time
+    run_time = end_time - start_time
     walk_time = end_walk_time - start_walk_time
     logger.info(
         'run_time= %.3fs rate= %.2f MB/s bytes= %d',
         run_time,
-        (control_data['counts']['bytes_read']/(1024*1024))/walk_time,
+        (control_data['counts']['bytes_read'] / (1024 * 1024)) / walk_time,
         control_data['counts']['bytes_read'],
     )
     footer = [

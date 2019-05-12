@@ -2,7 +2,7 @@
 
 """
 
-    Copyright (c) 2017 Martin F. Falatic
+    Copyright (c) 2017-2019 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -26,73 +26,94 @@ import logging
 import dirtreedigest.utils as dtutils
 import dirtreedigest.worker as dtworker
 
+
 class CsumNoop(object):
     """ No-op digester """
     name = 'noop'
+
     def __init__(self):
         self.checksum = 0
+
     def update(self, msg):
         """ Update checksum """
         pass
+
     def hexdigest(self):
         """ Return digest string in hexadecimal format """
         return '{0:0{1}x}'.format(self.checksum, 8)
+
 
 class CsumNoop1(CsumNoop):
     """ No-op digester """
     name = 'noop1'
 
+
 class CsumNoop2(CsumNoop):
     """ No-op digester """
     name = 'noop2'
+
 
 class CsumNoop3(CsumNoop):
     """ No-op digester """
     name = 'noop3'
 
+
 class CsumNoop4(CsumNoop):
     """ No-op digester """
     name = 'noop4'
+
 
 class CsumNoop5(CsumNoop):
     """ No-op digester """
     name = 'noop5'
 
+
 class CsumNoop6(CsumNoop):
     """ No-op digester """
     name = 'noop6'
+
 
 class CsumNoop7(CsumNoop):
     """ No-op digester """
     name = 'noop7'
 
+
 class CsumNoop8(CsumNoop):
     """ No-op digester """
     name = 'noop8'
 
+
 class CsumAdler32(object):
     """ Adler32 digester """
     name = 'adler32'
+
     def __init__(self):
         self.checksum = 1
+
     def update(self, msg):
         """ Update checksum """
         self.checksum = zlib.adler32(msg, self.checksum)
+
     def hexdigest(self):
         """ Return digest string in hexadecimal format """
         return '{0:0{1}x}'.format(self.checksum, 8)
 
+
 class CsumCrc32(object):
     """ CRC32 digester """
     name = 'crc32'
+
     def __init__(self):
         self.checksum = 0
+
     def update(self, msg):
         """ Update checksum """
         self.checksum = zlib.crc32(msg, self.checksum)
+
     def hexdigest(self):
         """ Return digest string in hexadecimal format """
         return '{0:0{1}x}'.format(self.checksum, 8)
+
 
 # pylint: disable=bad-whitespace, no-member
 DIGEST_FUNCTIONS = {
@@ -114,7 +135,7 @@ DIGEST_FUNCTIONS = {
     'sha384':     {'name': 'sha384',    'len':  96, 'entry': hashlib.sha384},
     'sha512':     {'name': 'sha512',    'len': 128, 'entry': hashlib.sha512},
 }
-if sys.version_info >= (3,6):
+if sys.version_info >= (3, 6):
     DIGEST_FUNCTIONS36 = {
         'blake2b':    {'name': 'blake2b',   'len': 128, 'entry': hashlib.blake2b},
         'blake2s':    {'name': 'blake2s',   'len':  64, 'entry': hashlib.blake2s},
@@ -146,6 +167,7 @@ DIGEST_PRIORITY = [
     'sha3_512',
 ]
 
+
 def validate_digests(control_data):
     """ returns list of available digests """
     logger = logging.getLogger('digester')
@@ -164,11 +186,13 @@ def validate_digests(control_data):
     logger.debug('Digests: %s', digest_list)
     return digest_list
 
+
 def fill_digest_str(control_data, fillchar='-'):
     """ Create a padded dummy digest value """
     return '{' + ', '.join('{}: {}'.format(
-        i, fillchar*DIGEST_FUNCTIONS[i]['len']) for i in sorted(
+        i, fillchar * DIGEST_FUNCTIONS[i]['len']) for i in sorted(
             control_data['selected_digests'])) + '}'
+
 
 def digest_file(control_data, element):
     """ Digest a given element """
@@ -196,7 +220,7 @@ def digest_file(control_data, element):
                 None,
             ))
         # Process one block buffer completely before the next
-        block_read = fileh.read(min(control_data['max_block_size'], file_size-bytes_read))
+        block_read = fileh.read(min(control_data['max_block_size'], file_size - bytes_read))
         if control_data['mmap_mode']:
             control_data['buffer_blocks'][curr_buffer_index].seek(0)
             control_data['buffer_blocks'][curr_buffer_index].write(block_read)
@@ -210,7 +234,7 @@ def digest_file(control_data, element):
             active_jobs = 0
             completed_jobs = 0
             next_job = 0
-            while completed_jobs < total_jobs: # per buffered block
+            while completed_jobs < total_jobs:  # per buffered block
                 while next_job < total_jobs:
                     logger.debug(
                         'QUEUEING JOB %d with buffer #%d',
@@ -256,7 +280,7 @@ def digest_file(control_data, element):
                             next_buffer_index = new_buffer_index
                             buffer_full = False
                             block_read = fileh.read(
-                                min(control_data['max_block_size'], file_size-bytes_read))
+                                min(control_data['max_block_size'], file_size - bytes_read))
                             if not block_read:
                                 found_eof = True
                                 logger.debug('eof found')
@@ -308,12 +332,12 @@ def digest_file(control_data, element):
             rolloff -= 1
         dtutils.flush_debug_queue(control_data['q_debug'], logging.getLogger('worker'))
     end_time = dtutils.curr_time_secs()
-    run_time = end_time-start_time
+    run_time = end_time - start_time
     logger.debug('MAINLINE finished at %f', end_time)
     logger.debug(
         'run_time= %.3fs rate= %.2f MB/s bytes= %d %s',
         run_time,
-        (bytes_read/(1024*1024))/run_time,
+        (bytes_read / (1024 * 1024)) / run_time,
         bytes_read,
         element)
     control_data['counts']['bytes_read'] += bytes_read

@@ -2,7 +2,7 @@
 
 """
 
-    Copyright (c) 2017 Martin F. Falatic
+    Copyright (c) 2017-2019 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -27,12 +27,14 @@ import mmap
 import logging  # For constants - do not log directly from here
 from enum import Enum
 
+
 class WorkerSignal(Enum):
     """ Enums to communicate with workers """
     INIT = 0
     PROCESS = 1
     RESULT = 2
     QUIT = 3
+
 
 def worker_process(q_work_unit, q_results, q_debug, mmap_mode=False):
     """ This is run as a subprocess, potentially with spawn()

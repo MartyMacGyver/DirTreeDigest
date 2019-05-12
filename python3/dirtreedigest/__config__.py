@@ -2,7 +2,7 @@
 
 """
 
-    Copyright (c) 2017 Martin F. Falatic
+    Copyright (c) 2017-2019 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,11 +22,11 @@ import logging
 
 PACKAGE_DATA = {
     'name': 'DirTreeDigest',
-    'version': '0.6.5',
+    'version': '0.6.6',
     'url': 'https://github.com/MartyMacGyver/DirTreeDigest',
     'author': 'Martin F. Falatic',
     'author_email': 'martin@falatic.com',
-    'copyright': 'Copyright (c) 2017',
+    'copyright': 'Copyright (c) 2017-2019',
     'license': 'Apache License 2.0',
     'description': 'Directory Tree Digester',
     'long_description': """
