@@ -234,20 +234,18 @@ def main():
         dtutils.outfile_write(
             control_data['altfile_name'],
             'w',
-            header1 +
-            [altfile_header.format(control_data['altfile_digest'])] +
-            header2,
+            header1 + [altfile_header.format(control_data['altfile_digest'])] + header2,
         )
 
     start_time = dtutils.curr_time_secs()
     logger.debug('MAINLINE starts - max_block_size=%d', control_data['max_block_size'])
     logger.debug('-;%s', dtdigester.fill_digest_str(control_data=control_data))
-    #results = []
+    # results = []
     walk_item = dtwalker.Walker()
     try:
         walk_item.start_workers(control_data=control_data)
         start_walk_time = dtutils.curr_time_secs()
-        #results = walk_item.process_tree(control_data=control_data)
+        # results = walk_item.process_tree(control_data=control_data)
         walk_item.process_tree(control_data=control_data)
         end_walk_time = dtutils.curr_time_secs()
         walk_item.end_workers(control_data=control_data)
@@ -257,9 +255,9 @@ def main():
         logging.shutdown()
         time.sleep(0.5)
         return False
-    #print()
-    #pprint(results)
-    #print()
+    # print()
+    # pprint(results)
+    # print()
     end_time = dtutils.curr_time_secs()
     run_time = end_time - start_time
     walk_time = end_walk_time - start_walk_time

@@ -34,7 +34,7 @@ def test_split_net_drive(path, rval):
 @pytest.mark.parametrize(
     ('root', 'elem', 'rval'), [
         ('C:/', 'C:/test/a', 'test/a'),
-        ('C:',  'C:/test/a', 'test/a'),
+        ('C:', 'C:/test/a', 'test/a'),
         ('C:/test', 'C:/test/a', 'a'),
         ('/', '/test/a', 'test/a'),
         ('/', '/test/a', 'test/a'),

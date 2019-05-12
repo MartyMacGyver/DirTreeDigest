@@ -151,7 +151,7 @@ def main():
         'w',
         header1 + [outfile_header] + header2,
     )
-    #start_time = dtutils.curr_time_secs()
+    # start_time = dtutils.curr_time_secs()
     logger.debug('MAINLINE starts')
 
     comparator = dtcompare.Comparator(control_data=control_data)
@@ -161,8 +161,8 @@ def main():
         file_r=control_data['file_r'],
     )
 
-    #end_time = dtutils.curr_time_secs()
-    #run_time = end_time - start_time
+    # end_time = dtutils.curr_time_secs()
+    # run_time = end_time - start_time
     footer = [
         '',
         '#{}'.format('-' * 78),

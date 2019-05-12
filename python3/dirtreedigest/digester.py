@@ -117,34 +117,34 @@ class CsumCrc32(object):
 
 # pylint: disable=bad-whitespace, no-member
 DIGEST_FUNCTIONS = {
-    'noop':       {'name': 'noop',      'len':   8, 'entry': CsumNoop},
-    'noop1':      {'name': 'noop1',     'len':   8, 'entry': CsumNoop1},
-    'noop2':      {'name': 'noop2',     'len':   8, 'entry': CsumNoop2},
-    'noop3':      {'name': 'noop3',     'len':   8, 'entry': CsumNoop3},
-    'noop4':      {'name': 'noop4',     'len':   8, 'entry': CsumNoop4},
-    'noop5':      {'name': 'noop5',     'len':   8, 'entry': CsumNoop5},
-    'noop6':      {'name': 'noop6',     'len':   8, 'entry': CsumNoop6},
-    'noop7':      {'name': 'noop7',     'len':   8, 'entry': CsumNoop7},
-    'noop8':      {'name': 'noop8',     'len':   8, 'entry': CsumNoop8},
-    'crc32':      {'name': 'crc32',     'len':   8, 'entry': CsumCrc32},
-    'adler32':    {'name': 'adler32',   'len':   8, 'entry': CsumAdler32},
-    'md5':        {'name': 'md5',       'len':  32, 'entry': hashlib.md5},
-    'sha1':       {'name': 'sha1',      'len':  40, 'entry': hashlib.sha1},
-    'sha224':     {'name': 'sha224',    'len':  56, 'entry': hashlib.sha224},
-    'sha256':     {'name': 'sha256',    'len':  64, 'entry': hashlib.sha256},
-    'sha384':     {'name': 'sha384',    'len':  96, 'entry': hashlib.sha384},
-    'sha512':     {'name': 'sha512',    'len': 128, 'entry': hashlib.sha512},
+    'noop':       {'name': 'noop',      'len':   8, 'entry': CsumNoop},  # noqa: E241
+    'noop1':      {'name': 'noop1',     'len':   8, 'entry': CsumNoop1},  # noqa: E241
+    'noop2':      {'name': 'noop2',     'len':   8, 'entry': CsumNoop2},  # noqa: E241
+    'noop3':      {'name': 'noop3',     'len':   8, 'entry': CsumNoop3},  # noqa: E241
+    'noop4':      {'name': 'noop4',     'len':   8, 'entry': CsumNoop4},  # noqa: E241
+    'noop5':      {'name': 'noop5',     'len':   8, 'entry': CsumNoop5},  # noqa: E241
+    'noop6':      {'name': 'noop6',     'len':   8, 'entry': CsumNoop6},  # noqa: E241
+    'noop7':      {'name': 'noop7',     'len':   8, 'entry': CsumNoop7},  # noqa: E241
+    'noop8':      {'name': 'noop8',     'len':   8, 'entry': CsumNoop8},  # noqa: E241
+    'crc32':      {'name': 'crc32',     'len':   8, 'entry': CsumCrc32},  # noqa: E241
+    'adler32':    {'name': 'adler32',   'len':   8, 'entry': CsumAdler32},  # noqa: E241
+    'md5':        {'name': 'md5',       'len':  32, 'entry': hashlib.md5},  # noqa: E241
+    'sha1':       {'name': 'sha1',      'len':  40, 'entry': hashlib.sha1},  # noqa: E241
+    'sha224':     {'name': 'sha224',    'len':  56, 'entry': hashlib.sha224},  # noqa: E241
+    'sha256':     {'name': 'sha256',    'len':  64, 'entry': hashlib.sha256},  # noqa: E241
+    'sha384':     {'name': 'sha384',    'len':  96, 'entry': hashlib.sha384},  # noqa: E241
+    'sha512':     {'name': 'sha512',    'len': 128, 'entry': hashlib.sha512},  # noqa: E241
 }
 if sys.version_info >= (3, 6):
     DIGEST_FUNCTIONS36 = {
-        'blake2b':    {'name': 'blake2b',   'len': 128, 'entry': hashlib.blake2b},
-        'blake2s':    {'name': 'blake2s',   'len':  64, 'entry': hashlib.blake2s},
-        'sha3_224':   {'name': 'sha3_224',  'len':  56, 'entry': hashlib.sha3_224},
-        'sha3_256':   {'name': 'sha3_256',  'len':  64, 'entry': hashlib.sha3_256},
-        'sha3_384':   {'name': 'sha3_384',  'len':  96, 'entry': hashlib.sha3_384},
-        'sha3_512':   {'name': 'sha3_512',  'len': 128, 'entry': hashlib.sha3_512},
-        #'shake_128': {'name': 'shake_128', 'len':  32, 'entry': hashlib.shake_128},
-        #'shake_256': {'name': 'shake_256', 'len':  64, 'entry': hashlib.shake_256},
+        'blake2b':    {'name': 'blake2b',   'len': 128, 'entry': hashlib.blake2b},  # noqa: E241
+        'blake2s':    {'name': 'blake2s',   'len':  64, 'entry': hashlib.blake2s},  # noqa: E241
+        'sha3_224':   {'name': 'sha3_224',  'len':  56, 'entry': hashlib.sha3_224},  # noqa: E241
+        'sha3_256':   {'name': 'sha3_256',  'len':  64, 'entry': hashlib.sha3_256},  # noqa: E241
+        'sha3_384':   {'name': 'sha3_384',  'len':  96, 'entry': hashlib.sha3_384},  # noqa: E241
+        'sha3_512':   {'name': 'sha3_512',  'len': 128, 'entry': hashlib.sha3_512},  # noqa: E241
+        # 'shake_128': {'name': 'shake_128', 'len':  32, 'entry': hashlib.shake_128},  # noqa: E241
+        # 'shake_256': {'name': 'shake_256', 'len':  64, 'entry': hashlib.shake_256},  # noqa: E241
     }
     DIGEST_FUNCTIONS.update(DIGEST_FUNCTIONS36)
 # pylint: enable=bad-whitespace, no-member

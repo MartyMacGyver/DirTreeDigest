@@ -35,26 +35,26 @@ class Walker(object):
     """ Directory walker and supporting functions """
 
     # Windows file attributes
-    FILE_ATTRIBUTE_NONE                = 0x00000
-    FILE_ATTRIBUTE_READONLY            = 0x00001
-    FILE_ATTRIBUTE_HIDDEN              = 0x00002
-    FILE_ATTRIBUTE_SYSTEM              = 0x00004
-    FILE_ATTRIBUTE_RESERVED_0008       = 0x00008
-    FILE_ATTRIBUTE_DIRECTORY           = 0x00010
-    FILE_ATTRIBUTE_ARCHIVE             = 0x00020
-    FILE_ATTRIBUTE_DEVICE              = 0x00040
-    FILE_ATTRIBUTE_NORMAL              = 0x00080
-    FILE_ATTRIBUTE_TEMPORARY           = 0x00100
-    FILE_ATTRIBUTE_SPARSE_FILE         = 0x00200
-    FILE_ATTRIBUTE_REPARSE_POINT       = 0x00400
-    FILE_ATTRIBUTE_COMPRESSED          = 0x00800
-    FILE_ATTRIBUTE_OFFLINE             = 0x01000
-    FILE_ATTRIBUTE_NOT_CONTENT_INDEXED = 0x02000  # pylint: disable=invalid-name
-    FILE_ATTRIBUTE_ENCRYPTED           = 0x04000
-    FILE_ATTRIBUTE_INTEGRITY_STREAM    = 0x08000
-    FILE_ATTRIBUTE_VIRTUAL             = 0x10000
-    FILE_ATTRIBUTE_NO_SCRUB_DATA       = 0x20000
-    FILE_ATTRIBUTE_INVALID             = 0x0FFFF
+    FILE_ATTRIBUTE_NONE                = 0x00000  # noqa: E221
+    FILE_ATTRIBUTE_READONLY            = 0x00001  # noqa: E221
+    FILE_ATTRIBUTE_HIDDEN              = 0x00002  # noqa: E221
+    FILE_ATTRIBUTE_SYSTEM              = 0x00004  # noqa: E221
+    FILE_ATTRIBUTE_RESERVED_0008       = 0x00008  # noqa: E221
+    FILE_ATTRIBUTE_DIRECTORY           = 0x00010  # noqa: E221
+    FILE_ATTRIBUTE_ARCHIVE             = 0x00020  # noqa: E221
+    FILE_ATTRIBUTE_DEVICE              = 0x00040  # noqa: E221
+    FILE_ATTRIBUTE_NORMAL              = 0x00080  # noqa: E221
+    FILE_ATTRIBUTE_TEMPORARY           = 0x00100  # noqa: E221
+    FILE_ATTRIBUTE_SPARSE_FILE         = 0x00200  # noqa: E221
+    FILE_ATTRIBUTE_REPARSE_POINT       = 0x00400  # noqa: E221
+    FILE_ATTRIBUTE_COMPRESSED          = 0x00800  # noqa: E221
+    FILE_ATTRIBUTE_OFFLINE             = 0x01000  # noqa: E221
+    FILE_ATTRIBUTE_NOT_CONTENT_INDEXED = 0x02000  # noqa: E221  # pylint: disable=invalid-name
+    FILE_ATTRIBUTE_ENCRYPTED           = 0x04000  # noqa: E221
+    FILE_ATTRIBUTE_INTEGRITY_STREAM    = 0x08000  # noqa: E221
+    FILE_ATTRIBUTE_VIRTUAL             = 0x10000  # noqa: E221
+    FILE_ATTRIBUTE_NO_SCRUB_DATA       = 0x20000  # noqa: E221
+    FILE_ATTRIBUTE_INVALID             = 0x0FFFF  # noqa: E221
 # pylint: enable=bad-whitespace
 
     def __init__(self):
@@ -100,7 +100,7 @@ class Walker(object):
                     control_data['mmap_mode'],
                 )
             ))
-            #control_data['p_worker_procs'][i].daemon = True
+            # control_data['p_worker_procs'][i].daemon = True
             control_data['p_worker_procs'][i].start()
         # Until workers are ended, raising exceptions can hang the parent process
 
@@ -232,7 +232,7 @@ class Walker(object):
                 sorted_digests = '{' + ', '.join('{}: {}'.format(
                     i, elem_data['digests'][i]) for i in sorted(
                         elem_data['digests'])) + '}'
-                #self.single_process_digest_test(control_data, element)
+                # self.single_process_digest_test(control_data, element)
                 if control_data['altfile_digest']:
                     alt_digest = elem_data['digests'][control_data['altfile_digest']]
             else:

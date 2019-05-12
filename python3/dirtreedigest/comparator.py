@@ -26,12 +26,12 @@ from enum import Enum
 
 
 class DiffType(Enum):
-    M_UNDEF = 0  # Undefined (error case)
-    M_NONE  = 1  # Diff file Name, Diff Data ("no match" anywhere)
-    M_SFSD  = 2  # Same Full name, Same Data (Opposite only)
-    M_SFDD  = 3  # Same Full name, Diff Data (Opposite only)
-    M_SNSD  = 4  # Same file Name, Same Data (Opposite and Same sides)
-    M_DNSD  = 5  # Diff file Name, Same Data (Opposite and Same sides)
+    M_UNDEF = 0  # Undefined (error case)  # noqa: E221
+    M_NONE  = 1  # Diff file Name, Diff Data ("no match" anywhere)  # noqa: E221
+    M_SFSD  = 2  # Same Full name, Same Data (Opposite only)  # noqa: E221
+    M_SFDD  = 3  # Same Full name, Diff Data (Opposite only)  # noqa: E221
+    M_SNSD  = 4  # Same file Name, Same Data (Opposite and Same sides)  # noqa: E221
+    M_DNSD  = 5  # Diff file Name, Same Data (Opposite and Same sides)  # noqa: E221
 
 
 class Comparator(object):
@@ -150,7 +150,7 @@ class Comparator(object):
                 (elem['pathpart'], elem['filepart']) = elem['fullname'].rsplit('/', 1)
             else:
                 (elem['pathpart'], elem['filepart']) = ('', elem['fullname'])
-            #print(path, name)
+            # print(path, name)
 
     def compare(self, file_l, file_r):
         """ Main entry: compare two dirtreedigest reports """
@@ -229,12 +229,12 @@ class Comparator(object):
         elems_added = []
         for name in name_diff_r:
             digest_r = self.files_by_name_r[name]['digests'][self.best_digest]
-            #print("checking", name)
+            # print("checking", name)
             if digest_r in self.files_by_digest_l:
-                #print(name, digest_r)
-                #matched_elems = [elem['fullname'] for elem in self.files_by_digest_l[digest_r]]
-                #matched_names = ','.join(matched_elems)
-                #print("> COPIED  {} == {}".format(name, matched_names))
+                # print(name, digest_r)
+                # matched_elems = [elem['fullname'] for elem in self.files_by_digest_l[digest_r]]
+                # matched_names = ','.join(matched_elems)
+                # print("> COPIED  {} == {}".format(name, matched_names))
                 self.files_by_name_r[name]['status'] = 'copied'
                 for elem in self.files_by_digest_l[digest_r]:
                     if elem['filepart'] == self.files_by_name_r[name]['filepart']:
@@ -243,7 +243,7 @@ class Comparator(object):
                 self.files_by_name_r[name]['match'] = self.files_by_digest_l[digest_r]
                 elems_copied.append(self.files_by_name_r[name])
             else:
-                #print("> ADDED   {}".format(name))
+                # print("> ADDED   {}".format(name))
                 self.files_by_name_r[name]['status'] = 'added'
                 elems_added.append(self.files_by_name_r[name])
         return (elems_copied, elems_added)
@@ -253,17 +253,17 @@ class Comparator(object):
         elems_deleted = []
         for name in name_diff_l:
             digest_l = self.files_by_name_l[name]['digests'][self.best_digest]
-            #print("checking", name)
+            # print("checking", name)
             if digest_l in self.files_by_digest_r:
-                #print(name, digest_l)
-                #matched_elems = [elem['fullname'] for elem in self.files_by_digest_r[digest_l]]
-                #matched_names = ','.join(matched_elems)
-                #print("< MOVED   {} == {}".format(name, matched_names))
+                # print(name, digest_l)
+                # matched_elems = [elem['fullname'] for elem in self.files_by_digest_r[digest_l]]
+                # matched_names = ','.join(matched_elems)
+                # print("< MOVED   {} == {}".format(name, matched_names))
                 self.files_by_name_l[name]['status'] = 'moved'
                 self.files_by_name_l[name]['match'] = self.files_by_digest_r[digest_l]
                 elems_moved.append(self.files_by_name_l[name])
             else:
-                #print("< DELETED {}".format(name))
+                # print("< DELETED {}".format(name))
                 self.files_by_name_l[name]['status'] = 'deleted'
                 elems_deleted.append(self.files_by_name_l[name])
         return (elems_moved, elems_deleted)
