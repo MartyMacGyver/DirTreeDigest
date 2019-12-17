@@ -22,7 +22,7 @@ import logging
 
 PACKAGE_DATA = {
     'name': 'DirTreeDigest',
-    'version': '0.6.6',
+    'version': '1.0.0',
     'url': 'https://github.com/MartyMacGyver/DirTreeDigest',
     'author': 'Martin F. Falatic',
     'author_email': 'martin@falatic.com',
@@ -46,11 +46,11 @@ For Windows, OS X and Linux
         'Intended Audience :: Developers',
         'Topic :: Utilities',
         'Programming Language :: Python :: 3 :: Only',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
-        'Development Status :: 4 - Beta',
-        # 'Development Status :: 5 - Production/Stable',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Development Status :: 5 - Production/Stable',
     ],
     'packages': [
         'dirtreedigest',
