@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-
 """
 
-    Copyright (c) 2017-2019 Martin F. Falatic
+    Copyright (c) 2017-2020 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,18 +16,19 @@
 
 """
 
+import argparse
+import logging
 import os
 import sys
-import logging
 import time
-import argparse
+
 import dirtreedigest.__config__ as dtconfig
+import dirtreedigest.digester as dtdigester
 import dirtreedigest.utils as dtutils
 import dirtreedigest.walker as dtwalker
-import dirtreedigest.digester as dtdigester
 
 
-def validate_args():
+def validate_args(headline):
     """ Validate command-line arguments """
     control_data = dtconfig.CONTROL_DATA
     # package_data = dtconfig.PACKAGE_DATA
@@ -63,9 +62,9 @@ def validate_args():
     parser.add_argument('--buffers', dest='buffers', metavar='N',
                         default=control_data['max_buffers'], type=int, action='store',
                         help='number of buffers')
-    parser.add_argument('--nomap', dest='nomap',
+    parser.add_argument('--noshm', dest='noshm',
                         action='store_true',
-                        help='don\'t use mmap internally')
+                        help='don\'t use shared memory')
     parser.add_argument('--nocase', dest='nocase',
                         action='store_true',
                         help='case insensitive matching')
@@ -125,6 +124,10 @@ def validate_args():
 
     logger = logging.getLogger('_main_')
     logger.info('Log begins')
+    logger.info('-' * 78)
+    logger.info(headline)
+    logger.info(f"Using Python {sys.version}")
+    logger.info('-' * 78)
 
     logger.info('Root dir (gvn): %s', args.root)
     logger.info('Root dir (mod): %s', control_data['root_dir'])
@@ -145,11 +148,10 @@ def validate_args():
     control_data['max_buffers'] = args.buffers
     logger.info('max_buffers: %d', control_data['max_buffers'])
 
-    control_data['mmap_mode'] = True
-    if args.nomap or sys.platform != 'win32':
-        control_data['mmap_mode'] = False
-    control_data['mmap_prefix'] += '{}'.format(os.getpid())
-    logger.info('mmap_mode: %s', control_data['mmap_mode'])
+    control_data['shm_mode'] = True
+    if args.noshm or not dtutils.shared_memory_available():
+        control_data['shm_mode'] = False
+    logger.info('shm_mode: %s', control_data['shm_mode'])
 
     control_data['ignore_path_case'] = False
     if args.nocase:
@@ -195,11 +197,13 @@ def main():
     control_data = dtconfig.CONTROL_DATA
     package_data = dtconfig.PACKAGE_DATA
 
+    headline = f"{package_data['name']} Digester {package_data['version']}"
+
     print()
-    print(package_data['name'], 'Digester', package_data['version'])
+    print(headline)
     print()
 
-    if not validate_args():
+    if not validate_args(headline):
         return False
 
     logger = logging.getLogger('_main_')
@@ -216,8 +220,9 @@ def main():
         '',
     ]
 
-    logger.info('Logging out: %s', control_data['logfile_name'])
-    logger.info('Main output: %s', control_data['outfile_name'])
+    logger.debug('Logging out: %s', control_data['logfile_name'])
+    logger.debug('Main output: %s', control_data['outfile_name'])
+
     outfile_header = '#         Digests               |'
     outfile_header += 'accessT |modifyT |createT |attr|watr|'
     outfile_header += '   size   |relative name'
@@ -240,31 +245,27 @@ def main():
     start_time = dtutils.curr_time_secs()
     logger.debug('MAINLINE starts - max_block_size=%d', control_data['max_block_size'])
     logger.debug('-;%s', dtdigester.fill_digest_str(control_data=control_data))
-    # results = []
     walk_item = dtwalker.Walker()
     try:
-        walk_item.start_workers(control_data=control_data)
+        walk_item.initialize(control_data=control_data)
         start_walk_time = dtutils.curr_time_secs()
-        # results = walk_item.process_tree(control_data=control_data)
         walk_item.process_tree(control_data=control_data)
         end_walk_time = dtutils.curr_time_secs()
-        walk_item.end_workers(control_data=control_data)
+        walk_item.teardown(control_data=control_data)
     except KeyboardInterrupt:
-        walk_item.end_workers(control_data=control_data)
+        walk_item.teardown(control_data=control_data)
         logger.error('Ctrl+C pressed: exiting')
         logging.shutdown()
-        time.sleep(0.5)
+        time.sleep(0.1)
         return False
-    # print()
-    # pprint(results)
-    # print()
     end_time = dtutils.curr_time_secs()
-    run_time = end_time - start_time
-    walk_time = end_walk_time - start_walk_time
+    delta_time = end_time - start_time if end_time - start_time > 0 else 0.000001
+    delta_walk_time = end_walk_time - start_walk_time if end_walk_time - start_walk_time > 0 else 0.000001
     logger.info(
-        'run_time= %.3fs rate= %.2f MB/s bytes= %d',
-        run_time,
-        (control_data['counts']['bytes_read'] / (1024 * 1024)) / walk_time,
+        'run_time= %.3fs walk_time= %.3fs rate= %.2f MB/s bytes= %d',
+        delta_time,
+        delta_walk_time,
+        control_data['counts']['bytes_read'] / 1024 / 1024 / delta_walk_time,
         control_data['counts']['bytes_read'],
     )
     footer = [
@@ -286,3 +287,7 @@ def main():
         dtutils.outfile_write(control_data['altfile_name'], 'a', footer)
     logger.debug('MAINLINE ends - max_block_size=%d', control_data['max_block_size'])
     logger.info('Log ends')
+
+    print()
+    print(f"Logging out: {control_data['logfile_name']}")
+    print(f"Main output: {control_data['outfile_name']}")

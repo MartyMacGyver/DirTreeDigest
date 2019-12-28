@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-
 """
 
-    Copyright (c) 2017-2019 Martin F. Falatic
+    Copyright (c) 2017-2020 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,89 +20,94 @@
 
 """
 
-import os
-import mmap
 import logging  # For constants - do not log directly from here
-from enum import Enum
+import os
+import queue
+
+import dirtreedigest.utils as dtutils
+
+if dtutils.shared_memory_available():
+    from multiprocessing import shared_memory  # Python 3.8+
+else:
+    shared_memory = None
 
 
-class WorkerSignal(Enum):
-    """ Enums to communicate with workers """
-    INIT = 0
-    PROCESS = 1
-    RESULT = 2
-    QUIT = 3
-
-
-def worker_process(q_work_unit, q_results, q_debug, mmap_mode=False):
+def worker_process(debug_queue, cmd_queue, results_queue, shm_mode):
     """ This is run as a subprocess, potentially with spawn()
-       be careful with vars! """
-    digest_name = 'None'
+        be careful with vars!
+    """
     pid = os.getpid()
+    digest_name = 'None'
     while True:
         try:
-            (exec_state, wu_arg1, wu_arg2) = q_work_unit.get(True)
-            if exec_state == WorkerSignal.INIT:
-                digest_constructor = wu_arg1
-                digest_instance = digest_constructor()
-                if digest_instance:
+            try:
+                cqi = cmd_queue.get()
+                cmd = cqi.get('cmd', None)
+            except queue.Empty:
+                cmd = None
+            if cmd == dtutils.Cmd.INIT:
+                digest_func = cqi.get('digest_func', None)
+                if digest_func:
+                    digest_instance = digest_func()
                     digest_name = digest_instance.name
                 else:
                     digest_name = 'None'
-                    q_debug.put((
+                    debug_queue.put((
                         logging.ERROR,
                         'worker_process({}) init -- pid={} Missing constructor'.format(
                             digest_name, pid)))
-                q_debug.put((
+                debug_queue.put((
                     logging.DEBUG,
                     'worker_process({}) init -- pid={}'.format(
                         digest_name, pid)))
-                q_work_unit.task_done()
-            elif exec_state == WorkerSignal.PROCESS:
-                byte_block_len = wu_arg2
-                if mmap_mode:
-                    mm_block_name = wu_arg1
-                    if byte_block_len > 0:
-                        mm_block = mmap.mmap(
-                            -1,
-                            byte_block_len,
-                            mm_block_name,
-                        )
-                        byte_block = mm_block.read(byte_block_len)
-                        q_debug.put((
+                cmd_queue.task_done()
+            elif cmd == dtutils.Cmd.PROCESS:
+                block_size = cqi.get('block_size', None)
+                buf_name = cqi.get('buf_name', None)
+                if shm_mode:
+                    if block_size > 0:
+                        buf = shared_memory.SharedMemory(buf_name)
+                        byte_block = buf.buf[:block_size]
+                        debug_queue.put((
                             logging.DEBUG,
-                            'worker_process() reading mmap -- pid={} l={} c={} d={} digest_instance={}'.format(
-                                pid, byte_block_len, byte_block[0],
-                                digest_instance.hexdigest(), mm_block_name)))
+                            'worker_process() reading shared memory -- pid={} l={} c={} d={}'.format(
+                                pid, block_size, byte_block[0],
+                                digest_instance.hexdigest())))
                     else:
                         byte_block = b''
                 else:
-                    byte_block = wu_arg1
+                    byte_block = cqi.get('buf_block', None)
                 digest_instance.update(byte_block)
-                q_debug.put((
+                if shm_mode:
+                    del(byte_block)  # Otherwise shared_memory spews `BufferError: cannot close exported pointers exist`
+                debug_queue.put((
                     logging.DEBUG,
-                    'worker_process() process -- pid={} l={} d={}'.format(
-                        pid, byte_block_len, digest_instance.hexdigest())))
-                q_results.put('{} processed'.format(digest_name))
-                q_work_unit.task_done()
-            elif exec_state == WorkerSignal.RESULT:
-                q_debug.put((
+                    'worker_process() process -- pid={} buf_name={} l={} d={}'.format(
+                        pid, buf_name, block_size, digest_instance.hexdigest())))
+                results_queue.put({
+                    'msg': '{} processed'.format(digest_name),
+                })
+                cmd_queue.task_done()
+            elif cmd == dtutils.Cmd.RESULT:
+                debug_queue.put((
                     logging.DEBUG,
                     'worker_process({}) result -- pid={} digest={}'.format(
                         digest_name, pid, digest_instance.hexdigest())))
-                q_results.put((digest_name, digest_instance.hexdigest()))
-                q_work_unit.task_done()
-            elif exec_state == WorkerSignal.QUIT:
-                q_debug.put((
+                results_queue.put({
+                    'digest_name': digest_name,
+                    'digest_value': digest_instance.hexdigest(),
+                })
+                cmd_queue.task_done()
+            elif cmd == dtutils.Cmd.QUIT:
+                debug_queue.put((
                     logging.DEBUG,
                     'worker_process({}) quit -- pid={}'.format(
                         digest_name, pid)))
-                q_work_unit.task_done()
+                cmd_queue.task_done()
                 break
             else:
-                q_debug.put((
+                debug_queue.put((
                     logging.WARNING,
-                    'worker_process() bad state -- pid={}'.format(pid)))
-                break  # bad state
+                    'worker_process() invalid command -- pid={} cmd={}'.format(pid, cmd)))
         except KeyboardInterrupt:
             break

@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-
 """
 
-    Copyright (c) 2017-2019 Martin F. Falatic
+    Copyright (c) 2017-2020 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,16 +16,22 @@
 
 """
 
-import os
-import sys
-import stat
 import ctypes
 import logging
-import mmap
 import multiprocessing
+import os
+import stat
+import sys
+
+import dirtreedigest.digester as dtdigester
+import dirtreedigest.reader as dtreader
 import dirtreedigest.utils as dtutils
 import dirtreedigest.worker as dtworker
-import dirtreedigest.digester as dtdigester
+
+if dtutils.shared_memory_available():
+    from multiprocessing import shared_memory  # Python 3.8+
+else:
+    shared_memory = None
 
 
 # pylint: disable=bad-whitespace
@@ -60,15 +64,9 @@ class Walker(object):
     def __init__(self):
         self.logger = logging.getLogger('walker')
 
-    def start_workers(self, control_data):
-        """ Start long-running worker processes """
-        control_data['p_worker_procs'] = []
-        control_data['q_work_units'] = []
-        control_data['q_results'] = multiprocessing.Queue()
-        control_data['q_debug'] = multiprocessing.Queue()
-        control_data['buffer_blocks'] = []
-        control_data['buffer_sizes'] = []
-        control_data['buffer_names'] = []
+    def _init_misc(self, control_data):
+        """ Initialize items """
+        control_data['debug_queue'] = multiprocessing.Queue()
         control_data['ignored_file_pats'] = dtutils.compile_patterns(
             control_data['ignored_files'],
             control_data['ignore_path_case'],
@@ -77,57 +75,120 @@ class Walker(object):
             control_data['ignored_dirs'],
             control_data['ignore_path_case'],
         )
+
+    def _start_shared_memory(self, control_data):
+        """ Initialize shared memory """
+        control_data['buffer_blocks'] = []
+        control_data['buffer_sizes'] = []
+        control_data['buffer_names'] = []
         for i in range(control_data['max_buffers']):
-            buffer_name = '{}{}'.format(control_data['mmap_prefix'], i)
-            control_data['buffer_names'].append(buffer_name)
-            if control_data['mmap_mode']:
-                control_data['buffer_blocks'].append(mmap.mmap(
-                    -1,
-                    control_data['max_block_size'],
-                    buffer_name,
-                ))
+            if control_data['shm_mode']:
+                buf = shared_memory.SharedMemory(create=True, size=control_data['max_block_size'])
+                buffer_name = buf.name
+                control_data['buffer_blocks'].append(buf)
+                control_data['buffer_names'].append(buffer_name)
             else:
                 control_data['buffer_blocks'].append([None])
             control_data['buffer_sizes'].append(0)
+
+    def _end_shared_memory(self, control_data):
+        """ Clean up shared memory """
+        if control_data['shm_mode']:
+            for i in range(control_data['max_buffers']):
+                shm_buf = shared_memory.SharedMemory(name=control_data['buffer_names'][i])
+                shm_buf.close()
+                shm_buf.unlink()
+
+    def _start_reader(self, control_data):
+        """ Start long-running worker processes
+            Until subprocessed are ended, raising exceptions can hang the parent process
+        """
+        control_data['reader_proc'] = None
+        control_data['reader_cmd_queue'] = multiprocessing.Queue()
+        control_data['reader_results_queue'] = multiprocessing.Queue()
+        reader_proc = multiprocessing.Process(
+            target=dtreader.reader_process,
+            args=(
+                control_data['debug_queue'],
+                control_data['reader_cmd_queue'],
+                control_data['reader_results_queue'],
+                control_data['shm_mode'],
+                control_data['max_block_size'],
+            )
+        )
+        reader_proc.name = '---Reader'
+        reader_proc.start()
+
+    def _end_reader(self, control_data):
+        """ End reader subprocess """
+        control_data['reader_cmd_queue'].put({
+            'cmd': dtutils.Cmd.QUIT,
+        })
+        import time
+        time.sleep(0.5)  # Because reasons
+        while not control_data['reader_results_queue'].empty():
+            retval = control_data['reader_results_queue'].get()
+            self.logger.debug('Draining queue: %s', retval)
+        dtutils.flush_debug_queue(control_data['debug_queue'], logging.getLogger('reader'))
+        while control_data['reader_proc']:
+            if control_data['reader_proc'] and not control_data['reader_proc'].is_alive():
+                control_data['reader_proc'] = None
+
+    def _start_workers(self, control_data):
+        """ Start long-running worker processes
+            Until subprocessed are ended, raising exceptions can hang the parent process
+        """
+        control_data['worker_procs'] = []
+        control_data['worker_cmd_queues'] = []
+        control_data['worker_results_queue'] = multiprocessing.Queue()
         for i in range(len(control_data['selected_digests'])):
-            control_data['q_work_units'].append(multiprocessing.JoinableQueue())
-            control_data['p_worker_procs'].append(multiprocessing.Process(
+            control_data['worker_cmd_queues'].append(multiprocessing.JoinableQueue())
+            worker_proc = multiprocessing.Process(
                 target=dtworker.worker_process,
                 args=(
-                    control_data['q_work_units'][i],
-                    control_data['q_results'],
-                    control_data['q_debug'],
-                    control_data['mmap_mode'],
+                    control_data['debug_queue'],
+                    control_data['worker_cmd_queues'][i],
+                    control_data['worker_results_queue'],
+                    control_data['shm_mode'],
                 )
-            ))
-            # control_data['p_worker_procs'][i].daemon = True
-            control_data['p_worker_procs'][i].start()
-        # Until workers are ended, raising exceptions can hang the parent process
+            )
+            worker_proc.name = f'---Worker-{i}'
+            worker_proc.start()
+            control_data['worker_procs'].append(worker_proc)
 
-    def end_workers(self, control_data):
-        """ Signal processes that they're all done """
-        for q_work_unit in control_data['q_work_units']:
-            q_work_unit.put((
-                dtworker.WorkerSignal.QUIT,
-                None,
-                None,
-            ))
-        while not control_data['q_results'].empty():
-            retval = control_data['q_results'].get(True)
+    def _end_workers(self, control_data):
+        """ End worker subprocesses """
+        for worker_cmd_queue in control_data['worker_cmd_queues']:
+            worker_cmd_queue.put({
+                'cmd': dtutils.Cmd.QUIT,
+            })
+        while not control_data['worker_results_queue'].empty():
+            retval = control_data['worker_results_queue'].get()
             self.logger.debug('Draining queue: %s', retval)
-        while any(control_data['p_worker_procs']):
+        dtutils.flush_debug_queue(control_data['debug_queue'], logging.getLogger('worker'))
+        while any(control_data['worker_procs']):
             for i in range(len(control_data['selected_digests'])):
-                if (control_data['p_worker_procs'][i] is not None) and (
-                        not control_data['p_worker_procs'][i].is_alive()):
+                if (control_data['worker_procs'][i] is not None) and (
+                        not control_data['worker_procs'][i].is_alive()):
                     self.logger.debug(
                         'join %d (state = %s) at %f',
                         i,
-                        control_data['p_worker_procs'][i].is_alive(),
+                        control_data['worker_procs'][i].is_alive(),
                         dtutils.curr_time_secs()
                     )
-                    control_data['p_worker_procs'][i].join()
-                    control_data['p_worker_procs'][i] = None
-        dtutils.flush_debug_queue(control_data['q_debug'], logging.getLogger('worker'))
+                    control_data['worker_procs'][i].join()
+                    control_data['worker_procs'][i] = None
+
+    def initialize(self, control_data):
+        self._init_misc(control_data)
+        self._start_shared_memory(control_data)
+        self._start_reader(control_data)
+        self._start_workers(control_data)
+
+    def teardown(self, control_data):
+        self._end_shared_memory(control_data)
+        self._end_reader(control_data)
+        self._end_workers(control_data)
 
     def get_win_filemode(self, elem):
         """ Windows: get system-specific file stats """
@@ -193,7 +254,7 @@ class Walker(object):
                 results.append(self.visit_element(control_data, pathname, stats))
             else:
                 results.append(self.visit_element(control_data, pathname, stats))
-            dtutils.flush_debug_queue(control_data['q_debug'], logging.getLogger('worker'))
+            dtutils.flush_debug_queue(control_data['debug_queue'], logging.getLogger('worker'))
 
     def visit_element(self, control_data, element, stats):
         """ Stat / digest a specific element found during the directory walk """
@@ -232,7 +293,6 @@ class Walker(object):
                 sorted_digests = '{' + ', '.join('{}: {}'.format(
                     i, elem_data['digests'][i]) for i in sorted(
                         elem_data['digests'])) + '}'
-                # self.single_process_digest_test(control_data, element)
                 if control_data['altfile_digest']:
                     alt_digest = elem_data['digests'][control_data['altfile_digest']]
             else:
@@ -272,24 +332,3 @@ class Walker(object):
                 '{}'.format(alt_details),
             ])
         return elem_data
-
-    def single_process_digest_test(self, control_data, element):
-        """ Single-process digest for testing """
-        digest_name = 'sha1'
-        with dtutils.open_with_error_checking(element, 'rb') as (fileh, err):
-            if err:
-                return None
-            mdf = dtdigester.DIGEST_FUNCTIONS[digest_name]['entry']()
-            bytes_read = 0
-            while True:
-                byte_block = fileh.read(control_data['max_block_size'])
-                bytes_read += len(byte_block)
-                if not byte_block:
-                    break
-                mdf.update(byte_block)
-                self.logger.debug(
-                    'single_process_digest_test() processing -- digest=%s l=%d d=%s',
-                    digest_name, bytes_read, mdf.hexdigest())
-            self.logger.debug(
-                'single_process_digest_test() FINAL -- digest=%s l=%d d=%s',
-                digest_name, bytes_read, mdf.hexdigest())

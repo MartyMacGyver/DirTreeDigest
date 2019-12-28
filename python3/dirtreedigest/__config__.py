@@ -1,8 +1,6 @@
-﻿#!/usr/bin/env python3
+﻿"""
 
-"""
-
-    Copyright (c) 2017-2019 Martin F. Falatic
+    Copyright (c) 2017-2020 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,13 +20,13 @@ import logging
 
 PACKAGE_DATA = {
     'name': 'DirTreeDigest',
-    'version': '1.0.0',
+    'version': '1.0.2',
     'url': 'https://github.com/MartyMacGyver/DirTreeDigest',
     'author': 'Martin F. Falatic',
     'author_email': 'martin@falatic.com',
-    'copyright': 'Copyright (c) 2017-2019',
+    'copyright': 'Copyright (c) 2017-2020',
     'license': 'Apache License 2.0',
-    'description': 'Directory Tree Digester',
+    'description': 'Directory Tree Digester and Comparator',
     'long_description': """
 A suite for digesting and analyzing filesystems:
 
@@ -46,7 +44,6 @@ For Windows, OS X and Linux
         'Intended Audience :: Developers',
         'Topic :: Utilities',
         'Programming Language :: Python :: 3 :: Only',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
@@ -75,8 +72,7 @@ CONTROL_DATA = {
     'outfile_name': None,
     'altfile_name': None,
     'logfile_ext': 'log',
-    'mmap_prefix': 'SHM_',
-    'mmap_mode': True,
+    'shm_mode': True,
     'max_concurrent_jobs': 32,
     'max_buffers': 4,
     'max_block_size_mb': 16,
@@ -97,10 +93,13 @@ CONTROL_DATA = {
     'buffer_sizes': None,
     'default_digests': None,
     'selected_digests': [],
-    'p_worker_procs': None,
-    'q_work_units': None,
-    'q_results': None,
-    'q_debug': None,
+    'reader_proc': None,
+    'reader_cmd_queue': None,
+    'reader_results_queue': None,
+    'worker_procs': None,
+    'worker_cmd_queues': None,
+    'worker_results_queue': None,
+    'debug_queue': None,
     'root_dir': None,
 }
 

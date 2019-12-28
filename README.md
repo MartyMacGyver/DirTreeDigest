@@ -40,7 +40,12 @@ Given that, there are a few ways to deal with multiple digesting/hashing:
 
     In theory the ideal solution would be read-only shared memory, that would be written to one and which each worker could read from independently. The first try used shared buffers with `multiprocessing.sharedctypes` (which cannot be pickled and so cannot be sent to a spawned process) and `multiprocessing.Array` (which worked but was quite slow and was still effectively a copy process). The GIL seemed set against this idea.
     
-    Then `mmap` was tried. In Windows if you created a shared memory buffer using `mmap.mmap(0, BIGCHUNKSIZE, 'SomeName1')` you can get to it from the worker processes via the same tag `SomeName1`. This doesn't require disk backing (which would defeat the purpose of reducing media I/O) and indeed, the performance was noticeably better than queueing. (It's not clear how to tackle this in Linux yet.)
+    Then `mmap` was tried. In Windows if you created a shared memory buffer using `mmap.mmap(0, BIGCHUNKSIZE, 'SomeName1')` you can get to it from the worker processes via the same tag `SomeName1`. This doesn't require disk backing (which would defeat the purpose of reducing media I/O) and indeed, the performance was noticeably better than queueing.
+
+    Thanks to the effort of Davin Potts (@applio), [Python 3.8 includes shared memory handling for multiprocessing](https://docs.python.org/3/library/multiprocessing.shared_memory.html) that is greatly superior to previous versions, allowing one to maximize compatibility and minimize duplication. Therefore (unless that gets backported) memory mapping is only available with Python 3.8+ ... but it's available on all platforms.
+
+    Note: shared_memory is a bit twitchy if you take a slice of it in a subprocess. if you don't delete the slice you made, you'll get a raft of `BufferError: cannot close exported pointers exist` when the library tries to garbage collect later.
+
 
 Moderate performance improvements for large files come from the use of a small ring of buffers for pre-caching, so as to have sufficient data ready for hashing when the workers are done with previous units.
 
@@ -52,32 +57,40 @@ A debug queue was employed, rather than trying to log from the workers (e.g., fo
 
 Signal handling is tricky. Signal handling when `multiprocessing` is involved is very tricky. Add `logging` and it's ridiculous. At first custom signal handlers were tried, but they were surprisingly problematic so exception handling to deal with the occasional Ctrl-C (the likeliest commanded abnormal exit).
 
+Queues turned out to be tricky as well (at least on Windows). If you pass a queue to a subprocess on creation, you can write to the queue from there and read it from the parent. However, if the queue contains writes from a subprocess that has ended, it will block when you try to drain the queue. Threfore it was effective to drain the queue first before quitting the subprocess to avoid this issue.
+
 At a higher level, the architecture is straightforward:
 
-  - Initialize workers (they live as long as the top-level process).
+  - Initialize one or more shared memory buffers (if shared memory is in use)
+
+  - Initialize a long-lived reader process
+
+  - Initialize multiple long-lived worker processes
   
   - Walk the directory tree
 
   - For a given file (the debug queue is read and logged periodically during this):
 
-    - Send "init" command to each worker, telling them to reset and which digest tipe to prepare for
+    - Send an init command to each worker, telling them to reset and which digest type to prepare for
 
-    - Read the first block of the file into shared memory
+      - Read the next block of the file into the buffer (or into the first free shared memory block)
 
-    - Over the queue, inform all workers that the named shared memory block is ready for digesting
+      - Over the queue, inform all workers that the buffer or named shared memory block is ready for digestion
 
-    - While waiting for results, pre-fetch data into the next free buffer(s)
+      - While waiting for processing, pre-fetch data into other free buffer(s) and queue queue them for subsequent digestion
 
-    - Once all workers have finished processing the data block, send them the next available block to process. Repeat.
+      - Once all workers have finished processing the data block, free the completed block
 
-    - When EOF is reached and cache buffers are exhausted, request final hash data from workers
+      - Repeat until EOF is reached and cache buffers are exhausted
+    
+    - Request final hash data from workers
 
-  - When all files are processed, cleanly shut down the workers and exit
+    - Repeat with the next file
+
+  - When all files are processed, cleanly shut down the subprocesses and exit
 
 ## TODO
 
-  - Cleanups
+  - Cleanups - debug queue always says 'worker'; use f-strings, friendly process names vs pids, error legs for incomplete commands; failed file handling
 
   - More testing
-
-  - Linux/OS X mmap - the memory tagging trick that works optimally in Windows is different in Linux, and it's not clear how to do this in OS X yet, so less-efficient queueing is used by default  for these (--nomap is always active)

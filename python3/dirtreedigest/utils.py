@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-
 """
 
-    Copyright (c) 2017-2019 Martin F. Falatic
+    Copyright (c) 2017-2020 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,11 +17,22 @@
 """
 
 import logging
-import re
 import os
-from contextlib import contextmanager
+import re
+import sys
 import time
+from contextlib import contextmanager
 from datetime import datetime
+from enum import Enum
+
+
+# Enums to communicate with subprocesses
+Cmd = Enum('Cmd', 'INIT PROCESS FREE RESULT QUIT')
+
+
+def shared_memory_available():
+    """ Single place to check (handy if it gets backported) """
+    return sys.version_info >= (3, 8)
 
 
 @contextmanager
@@ -124,10 +133,10 @@ def curr_time_secs():
     return time.perf_counter()
 
 
-def flush_debug_queue(q_debug, logger):
+def flush_debug_queue(debug_queue, logger):
     """ Flush the debug message queue """
-    while not q_debug.empty():
-        retval = q_debug.get(True)
+    while not debug_queue.empty():
+        retval = debug_queue.get()
         log_level = retval[0]
         log_message = retval[1]
         logger.log(log_level, log_message)

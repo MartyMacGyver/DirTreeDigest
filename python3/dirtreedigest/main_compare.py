@@ -1,8 +1,6 @@
-﻿#!/usr/bin/env python3
+﻿"""
 
-"""
-
-    Copyright (c) 2017-2019 Martin F. Falatic
+    Copyright (c) 2017-2020 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,14 +16,16 @@
 
 """
 
-import logging
 import argparse
+import logging
+import sys
+
 import dirtreedigest.__config__ as dtconfig
-import dirtreedigest.utils as dtutils
 import dirtreedigest.comparator as dtcompare
+import dirtreedigest.utils as dtutils
 
 
-def validate_args():
+def validate_args(headline):
     """ Validate command-line arguments """
     control_data = dtconfig.CONTROL_DATA
     # package_data = dtconfig.PACKAGE_DATA
@@ -94,6 +94,11 @@ def validate_args():
 
     logger = logging.getLogger('_main_')
     logger.info('Log begins')
+    logger.info('-' * 78)
+    logger.info(headline)
+    logger.info(f"Using Python {sys.version}")
+    logger.info('-' * 78)
+
     control_data['file_l'] = args.file_left
     control_data['file_r'] = args.file_right
     logger.info('Digest file L: %s', args.file_left)
@@ -121,14 +126,17 @@ def main():
     """ Main entry point """
     control_data = dtconfig.CONTROL_DATA
     package_data = dtconfig.PACKAGE_DATA
-    logger = logging.getLogger('_main_')
+
+    headline = f"{package_data['name']} Comparator {package_data['version']}"
 
     print()
-    print(package_data['name'], 'Comparator', package_data['version'])
+    print(headline)
     print()
 
-    if not validate_args():
+    if not validate_args(headline=headline):
         return False
+
+    logger = logging.getLogger('_main_')
 
     header1 = [
         '#{}'.format('-' * 78),
@@ -162,7 +170,7 @@ def main():
     )
 
     # end_time = dtutils.curr_time_secs()
-    # run_time = end_time - start_time
+    # delta_time = end_time - start_time
     footer = [
         '',
         '#{}'.format('-' * 78),
@@ -180,3 +188,6 @@ def main():
     dtutils.outfile_write(control_data['outfile_name'], 'a', footer)
     logger.debug('MAINLINE ends')
     logger.info('Log ends')
+
+    print()
+    print(f"Main output: {control_data['outfile_name']}")

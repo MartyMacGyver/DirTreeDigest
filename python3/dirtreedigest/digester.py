@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-
 """
 
-    Copyright (c) 2017-2019 Martin F. Falatic
+    Copyright (c) 2017-2020 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,13 +16,17 @@
 
 """
 
-import os
-import sys
 import hashlib
-import zlib
 import logging
+import queue
+import zlib
+
 import dirtreedigest.utils as dtutils
-import dirtreedigest.worker as dtworker
+
+if dtutils.shared_memory_available():
+    from multiprocessing import shared_memory  # Python 3.8+
+else:
+    shared_memory = None
 
 
 class CsumNoop(object):
@@ -41,6 +43,11 @@ class CsumNoop(object):
     def hexdigest(self):
         """ Return digest string in hexadecimal format """
         return '{0:0{1}x}'.format(self.checksum, 8)
+
+
+class CsumNoop0(CsumNoop):
+    """ No-op digester """
+    name = 'noop0'
 
 
 class CsumNoop1(CsumNoop):
@@ -78,11 +85,6 @@ class CsumNoop7(CsumNoop):
     name = 'noop7'
 
 
-class CsumNoop8(CsumNoop):
-    """ No-op digester """
-    name = 'noop8'
-
-
 class CsumAdler32(object):
     """ Adler32 digester """
     name = 'adler32'
@@ -116,8 +118,10 @@ class CsumCrc32(object):
 
 
 # pylint: disable=bad-whitespace, no-member
-DIGEST_FUNCTIONS = {
+DIGEST_FUNCTIONS_TEST = {
+    # No-op test functions
     'noop':       {'name': 'noop',      'len':   8, 'entry': CsumNoop},  # noqa: E241
+    'noop0':      {'name': 'noop0',     'len':   8, 'entry': CsumNoop0},  # noqa: E241
     'noop1':      {'name': 'noop1',     'len':   8, 'entry': CsumNoop1},  # noqa: E241
     'noop2':      {'name': 'noop2',     'len':   8, 'entry': CsumNoop2},  # noqa: E241
     'noop3':      {'name': 'noop3',     'len':   8, 'entry': CsumNoop3},  # noqa: E241
@@ -125,7 +129,9 @@ DIGEST_FUNCTIONS = {
     'noop5':      {'name': 'noop5',     'len':   8, 'entry': CsumNoop5},  # noqa: E241
     'noop6':      {'name': 'noop6',     'len':   8, 'entry': CsumNoop6},  # noqa: E241
     'noop7':      {'name': 'noop7',     'len':   8, 'entry': CsumNoop7},  # noqa: E241
-    'noop8':      {'name': 'noop8',     'len':   8, 'entry': CsumNoop8},  # noqa: E241
+}
+DIGEST_FUNCTIONS_MAIN = {
+    # Digesters in Python since at least Python 2.7
     'crc32':      {'name': 'crc32',     'len':   8, 'entry': CsumCrc32},  # noqa: E241
     'adler32':    {'name': 'adler32',   'len':   8, 'entry': CsumAdler32},  # noqa: E241
     'md5':        {'name': 'md5',       'len':  32, 'entry': hashlib.md5},  # noqa: E241
@@ -135,21 +141,24 @@ DIGEST_FUNCTIONS = {
     'sha384':     {'name': 'sha384',    'len':  96, 'entry': hashlib.sha384},  # noqa: E241
     'sha512':     {'name': 'sha512',    'len': 128, 'entry': hashlib.sha512},  # noqa: E241
 }
-if sys.version_info >= (3, 6):
-    DIGEST_FUNCTIONS36 = {
-        'blake2b':    {'name': 'blake2b',   'len': 128, 'entry': hashlib.blake2b},  # noqa: E241
-        'blake2s':    {'name': 'blake2s',   'len':  64, 'entry': hashlib.blake2s},  # noqa: E241
-        'sha3_224':   {'name': 'sha3_224',  'len':  56, 'entry': hashlib.sha3_224},  # noqa: E241
-        'sha3_256':   {'name': 'sha3_256',  'len':  64, 'entry': hashlib.sha3_256},  # noqa: E241
-        'sha3_384':   {'name': 'sha3_384',  'len':  96, 'entry': hashlib.sha3_384},  # noqa: E241
-        'sha3_512':   {'name': 'sha3_512',  'len': 128, 'entry': hashlib.sha3_512},  # noqa: E241
-        # 'shake_128': {'name': 'shake_128', 'len':  32, 'entry': hashlib.shake_128},  # noqa: E241
-        # 'shake_256': {'name': 'shake_256', 'len':  64, 'entry': hashlib.shake_256},  # noqa: E241
-    }
-    DIGEST_FUNCTIONS.update(DIGEST_FUNCTIONS36)
+DIGEST_FUNCTIONS_PY36 = {
+    # Digesters added in Python 3.6
+    # Variable length digests are excluded (e.g., 'shake_128')
+    'blake2b':    {'name': 'blake2b',   'len': 128, 'entry': hashlib.blake2b},  # noqa: E241
+    'blake2s':    {'name': 'blake2s',   'len':  64, 'entry': hashlib.blake2s},  # noqa: E241
+    'sha3_224':   {'name': 'sha3_224',  'len':  56, 'entry': hashlib.sha3_224},  # noqa: E241
+    'sha3_256':   {'name': 'sha3_256',  'len':  64, 'entry': hashlib.sha3_256},  # noqa: E241
+    'sha3_384':   {'name': 'sha3_384',  'len':  96, 'entry': hashlib.sha3_384},  # noqa: E241
+    'sha3_512':   {'name': 'sha3_512',  'len': 128, 'entry': hashlib.sha3_512},  # noqa: E241
+}
 # pylint: enable=bad-whitespace, no-member
+DIGEST_FUNCTIONS = {}
+DIGEST_FUNCTIONS.update(DIGEST_FUNCTIONS_TEST)
+DIGEST_FUNCTIONS.update(DIGEST_FUNCTIONS_MAIN)
+DIGEST_FUNCTIONS.update(DIGEST_FUNCTIONS_PY36)
 
-''' From least to most secure, excluding noops '''
+
+''' From least to most secure, excluding tests '''
 DIGEST_PRIORITY = [
     'crc32',
     'adler32',
@@ -199,145 +208,79 @@ def digest_file(control_data, element):
     logger = logging.getLogger('digester')
     start_time = dtutils.curr_time_secs()
     logger.debug('process_file(%s)', element)
-    curr_buffer_index = next_buffer_index = 0
     total_jobs = len(control_data['selected_digests'])
-    buffers_in_use = 0
-    active_jobs = 0
     bytes_read = 0
     found_eof = False
-    buffer_full = False
     hash_stats = {}
-    file_size = os.path.getsize(element)
-    with dtutils.open_with_error_checking(element, 'rb') as (fileh, err):
-        if err:
-            return None
-        for i, q_work_unit in enumerate(control_data['q_work_units']):
-            digest_name = control_data['selected_digests'][i]
-            digest_func = DIGEST_FUNCTIONS[digest_name]['entry']
-            q_work_unit.put((
-                dtworker.WorkerSignal.INIT,
-                digest_func,
-                None,
-            ))
-        # Process one block buffer completely before the next
-        block_read = fileh.read(min(control_data['max_block_size'], file_size - bytes_read))
-        if control_data['mmap_mode']:
-            control_data['buffer_blocks'][curr_buffer_index].seek(0)
-            control_data['buffer_blocks'][curr_buffer_index].write(block_read)
-        else:
-            control_data['buffer_blocks'][curr_buffer_index] = block_read
-        block_len = len(block_read)
-        control_data['buffer_sizes'][curr_buffer_index] = block_len
-        bytes_read += block_len
-        buffers_in_use = 1
-        while buffers_in_use:
-            active_jobs = 0
-            completed_jobs = 0
-            next_job = 0
-            while completed_jobs < total_jobs:  # per buffered block
-                while next_job < total_jobs:
-                    logger.debug(
-                        'QUEUEING JOB %d with buffer #%d',
-                        next_job, curr_buffer_index)
-                    q_work_unit = control_data['q_work_units'][next_job]
-                    if control_data['mmap_mode']:
-                        q_work_unit.put((
-                            dtworker.WorkerSignal.PROCESS,
-                            control_data['buffer_names'][curr_buffer_index],
-                            control_data['buffer_sizes'][curr_buffer_index],
-                        ))
-                    else:
-                        # Note: This is noticably more costly versus shared memory mapping
-                        q_work_unit.put((
-                            dtworker.WorkerSignal.PROCESS,
-                            control_data['buffer_blocks'][curr_buffer_index],
-                            control_data['buffer_sizes'][curr_buffer_index],
-                        ))
-                    active_jobs += 1
-                    next_job += 1
-                    if active_jobs > total_jobs:
-                        logger.warning(
-                            'active_jobs %d > digests %d',
-                            active_jobs, total_jobs)
-                    if active_jobs == control_data['max_concurrent_jobs']:
-                        logger.debug(
-                            'active_jobs %d == max_concurrent %d',
-                            active_jobs, control_data['max_concurrent_jobs'])
-                        break
-                logger.debug('ACTIVE JOBS A %d', active_jobs)
-                while True:
-                    # Prefetch while we wait for active jobs to start completing
-                    # We always need at least one buffered item if not eof
-                    if not found_eof:
-                        new_buffer_index = (next_buffer_index + 1) % control_data['max_buffers']
-                        if new_buffer_index == curr_buffer_index:
-                            if not buffer_full:
-                                logger.debug(
-                                    'prefetch buffer is currently full - bufs_in_use %d',
-                                    buffers_in_use)
-                                buffer_full = True
-                        else:
-                            next_buffer_index = new_buffer_index
-                            buffer_full = False
-                            block_read = fileh.read(
-                                min(control_data['max_block_size'], file_size - bytes_read))
-                            if not block_read:
-                                found_eof = True
-                                logger.debug('eof found')
-                                continue
-                            block_len = len(block_read)
-                            bytes_read += block_len
-                            if control_data['mmap_mode']:
-                                control_data['buffer_blocks'][next_buffer_index].seek(0)
-                                control_data['buffer_blocks'][next_buffer_index].write(block_read)
-                            else:
-                                control_data['buffer_blocks'][next_buffer_index] = block_read
-                            control_data['buffer_sizes'][next_buffer_index] = block_len
-                            buffers_in_use += 1
-                            logger.debug(
-                                'prefetched %d bytes into buffer #%d bufs_in_use %d (%s)',
-                                len(block_read), next_buffer_index,
-                                buffers_in_use, element)
-                    if not control_data['q_results'].empty():
-                        break
-                dtutils.flush_debug_queue(control_data['q_debug'], logging.getLogger('worker'))
-                while not control_data['q_results'].empty():
-                    retval = control_data['q_results'].get(True)
-                    logger.debug('Returned: %s', retval)
-                    completed_jobs += 1
-                    active_jobs -= 1
-                logger.debug('ACTIVE JOBS B %d', active_jobs)
-            logger.debug(
-                'Finished buffer #%d cnt was %d of %d bytes',
-                curr_buffer_index,
-                buffers_in_use,
-                control_data['buffer_sizes'][curr_buffer_index])
-            curr_buffer_index = (curr_buffer_index + 1) % control_data['max_buffers']
-            buffers_in_use -= 1
-        for q_work_unit in control_data['q_work_units']:
-            q_work_unit.put((
-                dtworker.WorkerSignal.RESULT,
-                None,
-                None,
-            ))
-        dtutils.flush_debug_queue(control_data['q_debug'], logging.getLogger('worker'))
-        rolloff = total_jobs
-        while rolloff > 0:
-            retval = control_data['q_results'].get(True)
-            logger.debug('RETVAL: %s', retval)
-            if not isinstance(retval, tuple):
-                logger.warning('retval is not finalized')
+
+    control_data['reader_cmd_queue'].put({
+        'cmd': dtutils.Cmd.INIT,
+        'buf_names': control_data['buffer_names'],
+        'element': element,
+    })
+
+    for i, worker_cmd_queue in enumerate(control_data['worker_cmd_queues']):
+        digest_name = control_data['selected_digests'][i]
+        digest_func = DIGEST_FUNCTIONS[digest_name]['entry']
+        worker_cmd_queue.put({
+            'cmd': dtutils.Cmd.INIT,
+            'digest_func': digest_func,
+            'element': element,
+        })
+
+    while not found_eof:
+        block_read = control_data['reader_results_queue'].get()
+        logger.debug('BLOCK READ: %s %s %s', block_read['block_size'], block_read['buf_name'], element)
+        found_eof = block_read['found_eof']
+        block_size = block_read['block_size']
+        buf_block = block_read['buf_block']
+        buf_name = block_read['buf_name']
+        bytes_read += block_size
+        for worker_cmd_queue in control_data['worker_cmd_queues']:
+            worker_cmd_queue.put({
+                'cmd': dtutils.Cmd.PROCESS,
+                'block_size': block_size,
+                'buf_name': buf_name,  # Shared memory mode
+                'buf_block': buf_block,  # Non-shared memory mode
+                'element': element,
+            })
+        # Gather any intermediate outputs
+        jobs = total_jobs
+        while jobs > 0:
+            try:
+                result = control_data['worker_results_queue'].get_nowait()
+            except queue.Empty:
                 continue
-            hash_stats[retval[0]] = retval[1]
-            rolloff -= 1
-        dtutils.flush_debug_queue(control_data['q_debug'], logging.getLogger('worker'))
+            if result:
+                jobs -= 1
+        if buf_name:
+            control_data['reader_cmd_queue'].put({
+                'cmd': dtutils.Cmd.FREE,
+                'buf_names': [buf_name],
+            })
+
+    for worker_cmd_queue in control_data['worker_cmd_queues']:
+        worker_cmd_queue.put({
+            'cmd': dtutils.Cmd.RESULT,
+        })
+    dtutils.flush_debug_queue(control_data['debug_queue'], logging.getLogger('worker'))
+    jobs = total_jobs
+    while jobs > 0:
+        retval = control_data['worker_results_queue'].get()
+        logger.debug('RETVAL: %s', retval)
+        if 'msg' in retval:
+            continue  #TODO: messages pop up here from time to time.
+        hash_stats[retval['digest_name']] = retval['digest_value']
+        jobs -= 1
+    dtutils.flush_debug_queue(control_data['debug_queue'], logging.getLogger('worker'))
+
     end_time = dtutils.curr_time_secs()
-    run_time = end_time - start_time
+    delta_time = end_time - start_time if end_time - start_time > 0 else 0.000001
     logger.debug('MAINLINE finished at %f', end_time)
     logger.debug(
-        'run_time= %.3fs rate= %.2f MB/s bytes= %d %s',
-        run_time,
-        (bytes_read / (1024 * 1024)) / run_time,
+        'run_time= %.3fs rate= %.3f MB/s bytes= %d %s',
+        delta_time,
+        bytes_read / 1024 / 1024 / delta_time,
         bytes_read,
         element)
     control_data['counts']['bytes_read'] += bytes_read
