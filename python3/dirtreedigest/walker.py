@@ -228,7 +228,12 @@ class Walker(object):
         for elem in sorted(dir_list):
             pathname = dtutils.unixify_path(os.path.join(root_dir, elem))
             print("Processing {}".format(pathname))
-            stats = os.lstat(pathname)
+            try:
+                stats = os.lstat(pathname)
+            except FileNotFoundError:
+                self.logger.warning('FileNotFoundError %s', root_dir)
+                control_data['counts']['errors'] += 1
+                continue
             if stat.S_ISDIR(stats.st_mode):
                 if dtutils.elem_is_matched(
                         root_dir,

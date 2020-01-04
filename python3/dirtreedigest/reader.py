@@ -37,6 +37,7 @@ def reader_process(debug_queue, cmd_queue, results_queue, shm_mode, max_block_si
         be careful with vars!
     """
     pid = os.getpid()
+    buf_refs = {}
     buf_names = set()
     file_obj = None
     element = ''
@@ -58,17 +59,26 @@ def reader_process(debug_queue, cmd_queue, results_queue, shm_mode, max_block_si
                     logging.DEBUG,
                     f"READER: Init {add_buf_names} for element {element}"))
                 buf_names.update(add_buf_names)
+                for buf_name in buf_names:
+                    if shm_mode and buf_name not in buf_refs:
+                        buf_refs[buf_name] = shared_memory.SharedMemory(buf_name)
                 bytes_read = 0
                 found_eof = False
                 chunk = 0
                 if element:
+                    errors = None
                     file_size = os.path.getsize(element)
                     try:
                         file_obj = open(element, 'rb')
                     except IOError as err:
+                        errors = err
                         debug_queue.put((
                             logging.ERROR,
                             f"READER: Problem opening \"{element}\": {err}"))
+                    results_queue.put({
+                        'errors': errors,
+                        'element': element,
+                    })
             elif cmd == dtutils.Cmd.FREE:
                 add_buf_names = cqi.get('buf_names', [])
                 debug_queue.put((
@@ -76,6 +86,8 @@ def reader_process(debug_queue, cmd_queue, results_queue, shm_mode, max_block_si
                     f"READER: Free {add_buf_names}"))
                 buf_names.update(add_buf_names)
             elif cmd == dtutils.Cmd.QUIT:
+                # for buf in buf_refs:
+                #     del(buf)
                 if file_obj:
                     file_obj.close()
                 debug_queue.put((
@@ -87,7 +99,7 @@ def reader_process(debug_queue, cmd_queue, results_queue, shm_mode, max_block_si
                     logging.WARNING,
                     'reader_process() invalid command -- pid={} cmd={}'.format(pid, cmd)))
             else:  # Steady state
-                if not file_obj.closed:
+                if file_obj and not file_obj.closed:
                     block_size = min(max_block_size, file_size - bytes_read)
                     if (buf_names or not shm_mode) and file_size == 0:
                         found_eof = (bytes_read == file_size)
@@ -108,7 +120,8 @@ def reader_process(debug_queue, cmd_queue, results_queue, shm_mode, max_block_si
                             debug_queue.put((
                                 logging.DEBUG,
                                 f"READER: Reading chunk {chunk} of {block_size} bytes into {buf_name}"))
-                            buf = shared_memory.SharedMemory(buf_name)
+                            buf = buf_refs[buf_name]
+                            #buf = shared_memory.SharedMemory(buf_name)
                             buf.buf[:block_size] = file_obj.read(block_size)
                         else:
                             buf_name = None

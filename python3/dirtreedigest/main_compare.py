@@ -20,6 +20,8 @@ import argparse
 import logging
 import sys
 
+from pathlib import Path
+
 import dirtreedigest.__config__ as dtconfig
 import dirtreedigest.comparator as dtcompare
 import dirtreedigest.utils as dtutils
@@ -62,6 +64,9 @@ def validate_args(headline):
         parser.print_help()
         return False
 
+    control_data['file_l'] = args.file_left
+    control_data['file_r'] = args.file_right
+
     control_data['logfile_level'] = logging.INFO
     if args.debug:
         control_data['logfile_level'] = logging.DEBUG
@@ -71,9 +76,10 @@ def validate_args(headline):
     if args.output_title:
         output_title = args.output_title
     else:
-        output_title = '{}-{}'.format(
+        output_title = '{}-{}.{}'.format(
             control_data['outfile_prefix'],
             control_data['outfile_suffix'],
+            f"{Path(control_data['file_l']).stem} vs {Path(control_data['file_r']).stem}"
         )
 
     control_data['outfile_name'] = '{}.{}'.format(
@@ -99,8 +105,6 @@ def validate_args(headline):
     logger.info(f"Using Python {sys.version}")
     logger.info('-' * 78)
 
-    control_data['file_l'] = args.file_left
-    control_data['file_r'] = args.file_right
     logger.info('Digest file L: %s', args.file_left)
     logger.info('Digest file R: %s', args.file_right)
 

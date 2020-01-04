@@ -256,7 +256,6 @@ def main():
         walk_item.teardown(control_data=control_data)
         logger.error('Ctrl+C pressed: exiting')
         logging.shutdown()
-        time.sleep(0.1)
         return False
     end_time = dtutils.curr_time_secs()
     delta_time = end_time - start_time if end_time - start_time > 0 else 0.000001

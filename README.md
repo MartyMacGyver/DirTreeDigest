@@ -91,6 +91,15 @@ At a higher level, the architecture is straightforward:
 
 ## TODO
 
-  - Cleanups - debug queue always says 'worker'; use f-strings, friendly process names vs pids, error legs for incomplete commands; failed file handling
-
-  - More testing
+  - ~~Workers slowly leak memory~~ shared_memory will leak on Windows if you keep calling it. Bug report?
+  - Handle SIGINT better!
+  - Continue/refresh capability!
+  - Comma-delimited includes / excludes aren't working right - allow that? Remove that? Seems more trouble than its worth to allow
+  - Debug queue always says 'worker'
+  - Is there any good way to get timestamping aligned nicely without rewriting the log?
+  - Use friendly process names vs pids
+  - Use f-strings where possible
+  - Fix error legs for incomplete commands
+  - Get the comparator fully working and cleaned up
+  - Allow multiple files to feed each side of the comparison. Warn about exact duplicates - merge the rest
+  - More better testing

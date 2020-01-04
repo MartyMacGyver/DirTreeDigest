@@ -20,7 +20,7 @@ import logging
 
 PACKAGE_DATA = {
     'name': 'DirTreeDigest',
-    'version': '1.0.2',
+    'version': '1.0.4',
     'url': 'https://github.com/MartyMacGyver/DirTreeDigest',
     'author': 'Martin F. Falatic',
     'author_email': 'martin@falatic.com',
@@ -139,7 +139,8 @@ CONTROL_DATA['ignored_files'] = [
 ]
 
 CONTROL_DATA['ignored_dirs'] = [
-    '$Recycle.Bin',
+    'Config.Msi',
+    '$RECYCLE.BIN',
     'Recycled',
     'Recycler',
     'System Volume Information',

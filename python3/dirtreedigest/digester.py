@@ -218,6 +218,10 @@ def digest_file(control_data, element):
         'buf_names': control_data['buffer_names'],
         'element': element,
     })
+    result = control_data['reader_results_queue'].get()
+    dtutils.flush_debug_queue(control_data['debug_queue'], logging.getLogger('worker'))
+    if result['errors']:
+        return hash_stats
 
     for i, worker_cmd_queue in enumerate(control_data['worker_cmd_queues']):
         digest_name = control_data['selected_digests'][i]
