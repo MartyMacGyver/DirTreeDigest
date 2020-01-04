@@ -1,3 +1,8 @@
+# Misc
+.vscode/
+_local_files/
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

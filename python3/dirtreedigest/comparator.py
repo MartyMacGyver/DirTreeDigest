@@ -218,7 +218,7 @@ class Comparator(object):
             else:
                 self.files_by_name_l[name]['status'] = 'changed'
                 self.files_by_name_r[name]['status'] = 'changed'
-                self.logger.info("Digest changed: %s", name)
+                # self.logger.info("Digest changed: %s", name)
                 elems_changed.append(self.files_by_name_r[name])
         return (elems_changed)
 
