@@ -102,4 +102,4 @@ At a higher level, the architecture is straightforward:
   - Fix error legs for incomplete commands
   - Get the comparator fully working and cleaned up
   - Allow multiple files to feed each side of the comparison. Warn about exact duplicates - merge the rest
-  - More better testing
+  - More better testing (empty and unreadable files would be great)

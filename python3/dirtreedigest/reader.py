@@ -121,7 +121,6 @@ def reader_process(debug_queue, cmd_queue, results_queue, shm_mode, max_block_si
                                 logging.DEBUG,
                                 f"READER: Reading chunk {chunk} of {block_size} bytes into {buf_name}"))
                             buf = buf_refs[buf_name]
-                            #buf = shared_memory.SharedMemory(buf_name)
                             buf.buf[:block_size] = file_obj.read(block_size)
                         else:
                             buf_name = None

@@ -66,10 +66,9 @@ def worker_process(debug_queue, cmd_queue, results_queue, shm_mode):
                 block_size = cqi.get('block_size', None)
                 buf_name = cqi.get('buf_name', None)
                 if shm_mode:
-                    if buf_name not in buf_refs:
-                        buf_refs[buf_name] = shared_memory.SharedMemory(buf_name)
                     if block_size > 0:
-                        #buf = shared_memory.SharedMemory(buf_name)
+                        if buf_name not in buf_refs:
+                            buf_refs[buf_name] = shared_memory.SharedMemory(buf_name)
                         buf = buf_refs[buf_name]
                         byte_block = buf.buf[:block_size]
                         debug_queue.put((
