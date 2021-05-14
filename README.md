@@ -2,11 +2,9 @@
 [![Travis Build Status](https://travis-ci.org/MartyMacGyver/DirTreeDigest.svg?branch=master)](https://travis-ci.org/MartyMacGyver/DirTreeDigest)
 [![License](https://img.shields.io/badge/license-Apache2.0-yellow.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-# DirtreeDigest
+# DirTreeDigest
 
 A tool for generating cryptographic digests and collecting stats across a directory tree
-
-## WORK IN PROGRESS - UNDER DEVELOPMENT AND TEST
 
 Released under the Apache 2.0 license
 

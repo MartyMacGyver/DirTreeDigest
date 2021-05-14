@@ -1,6 +1,6 @@
 """
 
-    Copyright (c) 2017-2020 Martin F. Falatic
+    Copyright (c) 2017-2021 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ class Walker(object):
         control_data['buffer_blocks'] = []
         control_data['buffer_sizes'] = []
         control_data['buffer_names'] = []
-        for i in range(control_data['max_buffers']):
+        for _ in range(control_data['max_buffers']):
             if control_data['shm_mode']:
                 buf = shared_memory.SharedMemory(create=True, size=control_data['max_block_size'])
                 buffer_name = buf.name
@@ -114,7 +114,7 @@ class Walker(object):
                 control_data['reader_results_queue'],
                 control_data['shm_mode'],
                 control_data['max_block_size'],
-            )
+            ),
         )
         reader_proc.name = '---Reader'
         reader_proc.start()
@@ -150,7 +150,7 @@ class Walker(object):
                     control_data['worker_cmd_queues'][i],
                     control_data['worker_results_queue'],
                     control_data['shm_mode'],
-                )
+                ),
             )
             worker_proc.name = f'---Worker-{i}'
             worker_proc.start()
@@ -174,7 +174,7 @@ class Walker(object):
                         'join %d (state = %s) at %f',
                         i,
                         control_data['worker_procs'][i].is_alive(),
-                        dtutils.curr_time_secs()
+                        dtutils.curr_time_secs(),
                     )
                     control_data['worker_procs'][i].join()
                     control_data['worker_procs'][i] = None
@@ -225,9 +225,10 @@ class Walker(object):
             self.logger.warning('PermissionError %s', root_dir)
             control_data['counts']['errors'] += 1
             return
+        print("Processing path {}".format(root_dir))
         for elem in sorted(dir_list):
             pathname = dtutils.unixify_path(os.path.join(root_dir, elem))
-            print("Processing {}".format(pathname))
+            # print("Processing file {}".format(pathname))
             try:
                 stats = os.lstat(pathname)
             except FileNotFoundError:

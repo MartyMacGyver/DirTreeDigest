@@ -1,6 +1,6 @@
 """
 
-    Copyright (c) 2017-2020 Martin F. Falatic
+    Copyright (c) 2017-2021 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -186,7 +186,7 @@ def validate_digests(control_data):
     digests_not_found = set(control_data['selected_digests']) - digests_available
     if digests_not_found:
         logger.warning('Warning: invalid digest(s): %s', digests_not_found)
-    digest_list = sorted(list(digests_available))
+    digest_list = sorted(digests_available)
     if len(digest_list) > control_data['max_concurrent_jobs']:
         logger.error(
             'Error: Number of digests (%d) may not exceed max jobs (%d)',

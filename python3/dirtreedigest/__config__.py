@@ -1,6 +1,6 @@
 ﻿"""
 
-    Copyright (c) 2017-2020 Martin F. Falatic
+    Copyright (c) 2017-2021 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ PACKAGE_DATA = {
     'url': 'https://github.com/MartyMacGyver/DirTreeDigest',
     'author': 'Martin F. Falatic',
     'author_email': 'martin@falatic.com',
-    'copyright': 'Copyright (c) 2017-2020',
+    'copyright': 'Copyright (c) 2017-2021',
     'license': 'Apache License 2.0',
     'description': 'Directory Tree Digester and Comparator',
     'long_description': """
@@ -116,7 +116,7 @@ CONTROL_DATA['default_digests'] = [
     # 'blake2b',
     # 'blake2s',
     # 'sha3_224',
-    'sha3_256',
+    # 'sha3_256',
     # 'sha3_384',
     # 'sha3_512',
     # 'shake_128',

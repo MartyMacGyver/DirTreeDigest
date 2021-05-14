@@ -1,6 +1,6 @@
 ﻿"""
 
-    Copyright (c) 2017-2020 Martin F. Falatic
+    Copyright (c) 2017-2021 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ def validate_args(headline):
         output_title = '{}-{}.{}'.format(
             control_data['outfile_prefix'],
             control_data['outfile_suffix'],
-            f"{Path(control_data['file_l']).stem} vs {Path(control_data['file_r']).stem}"
+            f"{Path(control_data['file_l']).stem} vs {Path(control_data['file_r']).stem}",
         )
 
     control_data['outfile_name'] = '{}.{}'.format(

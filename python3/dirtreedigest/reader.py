@@ -1,6 +1,6 @@
 """
 
-    Copyright (c) 2017-2020 Martin F. Falatic
+    Copyright (c) 2017-2021 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ def reader_process(debug_queue, cmd_queue, results_queue, shm_mode, max_block_si
                     file_obj.close()
                 debug_queue.put((
                     logging.INFO,
-                    f"READER: Quit"))
+                    "READER: Quit"))
                 break
             elif cmd:
                 debug_queue.put((

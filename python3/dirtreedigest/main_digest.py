@@ -1,6 +1,6 @@
 """
 
-    Copyright (c) 2017-2020 Martin F. Falatic
+    Copyright (c) 2017-2021 Martin F. Falatic
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import argparse
 import logging
 import os
 import sys
-import time
 
 import dirtreedigest.__config__ as dtconfig
 import dirtreedigest.digester as dtdigester
