@@ -20,7 +20,7 @@ import logging
 
 PACKAGE_DATA = {
     'name': 'DirTreeDigest',
-    'version': '1.0.6',
+    'version': '1.0.7',
     'url': 'https://github.com/MartyMacGyver/DirTreeDigest',
     'author': 'Martin F. Falatic',
     'author_email': 'martin@falatic.com',
@@ -34,8 +34,6 @@ dirtreedigest - generates cryptographic digests and collects stats across a dire
 
 dirtreecmp - compare two dirtreedigest reports
 
-This is a development release and is not considered final
-
 For Windows, OS X and Linux
     """,
     'keywords': 'directory digest hashing integrity filesystem checksums',
@@ -47,6 +45,7 @@ For Windows, OS X and Linux
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Development Status :: 5 - Production/Stable',
     ],
     'packages': [
