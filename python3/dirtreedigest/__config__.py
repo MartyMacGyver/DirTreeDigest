@@ -30,11 +30,11 @@ PACKAGE_DATA = {
     'long_description': """
 A suite for digesting and analyzing filesystems:
 
-dirtreedigest - generates cryptographic digests and collects stats across a directory tree
+dirtreedigest - Generates cryptographic digests and collects stats across a directory tree
 
-dirtreecmp - compare two dirtreedigest reports
+dirtreecmp - Compares two dirtreedigest reports
 
-For Windows, OS X and Linux
+For Windows, OS X, and Linux
     """,
     'keywords': 'directory digest hashing integrity filesystem checksums',
     'classifiers': [
