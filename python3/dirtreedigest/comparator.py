@@ -203,9 +203,14 @@ class Comparator(object):
         (self.basepath_l, self.elements_l) = self.read_dtd_report(file_l)
         (self.basepath_r, self.elements_r) = self.read_dtd_report(file_r)
 
+        self.logger.info("Root L: %s", self.basepath_l)
+        self.logger.info("Root R: %s", self.basepath_r)
+
         self.best_digest = self.choose_best_digest_for_compare(self.elements_l, self.elements_r)
         if self.best_digest is None:
             return None
+
+        self.logger.info("BestDG: %s", self.best_digest)
 
         (self.files_by_name_l, self.files_by_digest_l) = self.slice_data(self.elements_l)
         (self.files_by_name_r, self.files_by_digest_r) = self.slice_data(self.elements_r)
@@ -221,23 +226,20 @@ class Comparator(object):
         (elems_moved, elems_deleted) = self.check_lhs(name_diff_l)
 
         for elem in sorted(elems_changed, key=lambda k: k['full_name']):
-            self.logger.info(f"CHANGED {elem['full_name']}")
-
-        for elem in sorted(elems_copied, key=lambda k: k['full_name']):
-            self.logger.info(f"COPIED  {elem['full_name']} == {'---'}")
+            self.logger.info(f"MOD   : \"{elem['full_name']}\"")
 
         for elem in sorted(elems_added, key=lambda k: k['full_name']):
-            self.logger.info(f"ADDED   {elem['full_name']}")
-
-        for elem in sorted(elems_moved, key=lambda k: k['full_name']):
-            self.logger.info(f"MOVED   {elem['full_name']} == {'---'}")
+            self.logger.info(f"ADD   : \"{elem['full_name']}\"")
 
         for elem in sorted(elems_deleted, key=lambda k: k['full_name']):
-            self.logger.info(f"DELETED {elem['full_name']}")
+            self.logger.info(f"DEL   : \"{elem['full_name']}\"")
 
-        self.logger.info("BestDG: %s", self.best_digest)
-        self.logger.info("Root L: %s", self.basepath_l)
-        self.logger.info("Root R: %s", self.basepath_r)
+        for elem in sorted(elems_copied, key=lambda k: k['full_name']):
+            self.logger.info(f"COPY  : \"{elem['full_name']}\" == \"{'---'}\"")
+
+        for elem in sorted(elems_moved, key=lambda k: k['full_name']):
+            self.logger.info(f"MOVE  : \"{elem['full_name']}\" == \"{'---'}\"")
+
         self.logger.info("ElemsL: %d", len(self.elements_l))
         self.logger.info("ElemsR: %d", len(self.elements_r))
         self.logger.info("FilesL: %d", len(self.files_by_name_l))
