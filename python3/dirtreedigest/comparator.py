@@ -20,6 +20,7 @@ import logging
 import re
 
 from collections import defaultdict
+from datetime import datetime
 from enum import Enum
 from os.path import basename, dirname
 
@@ -106,6 +107,7 @@ class Comparator(object):
                     if elem['type'] not in ['D', 'F']:
                         self.logger.warning(f"Ignoring file type '{elem['type']}' for {elem['full_name']}")
                     else:
+                        elem['id'] = len(elements)
                         elements.append(elem)
         return (basepath, elements)
 
@@ -147,36 +149,17 @@ class Comparator(object):
             if digest_l == digest_r:
                 self.files_by_name_l[name]['status'] = 'same'
                 self.files_by_name_r[name]['status'] = 'same'
+                if self.files_by_name_l[name]['mtime'] != self.files_by_name_r[name]['mtime']:
+                    time_l = datetime.fromtimestamp(int("0x"+self.files_by_name_l[name]['mtime'], 16))
+                    time_r = datetime.fromtimestamp(int("0x"+self.files_by_name_r[name]['mtime'], 16))
+                    self.logger.info("SAME-T: %ss: %s", int((time_r - time_l).total_seconds()), name)
             else:
                 self.files_by_name_l[name]['status'] = 'changed'
                 self.files_by_name_r[name]['status'] = 'changed'
-                # self.logger.info("Digest changed: %s", name)
+                if self.files_by_name_l[name]['mtime'] == self.files_by_name_r[name]['mtime']:
+                    self.logger.info("MOD-T : %s", name)
                 elems_changed.append(self.files_by_name_r[name])
         return (elems_changed)
-
-    def check_rhs(self, name_diff_r):
-        elems_copied = []
-        elems_added = []
-        for name in name_diff_r:
-            digest_r = self.files_by_name_r[name]['digests'][self.best_digest]
-            # print("checking", name)
-            if digest_r in self.files_by_digest_l:
-                # print(name, digest_r)
-                # matched_elems = [elem['full_name'] for elem in self.files_by_digest_l[digest_r]]
-                # matched_names = ','.join(matched_elems)
-                # print("> COPIED  {} == {}".format(name, matched_names))
-                self.files_by_name_r[name]['status'] = 'copied'
-                for elem in self.files_by_digest_l[digest_r]:
-                    if elem['file_name'] == self.files_by_name_r[name]['file_name']:
-                        print("Found likely source", self.files_by_name_r[name]['full_name'])
-                        break
-                self.files_by_name_r[name]['match'] = self.files_by_digest_l[digest_r]
-                elems_copied.append(self.files_by_name_r[name])
-            else:
-                print("> ADDED   {}".format(name))
-                self.files_by_name_r[name]['status'] = 'added'
-                elems_added.append(self.files_by_name_r[name])
-        return (elems_copied, elems_added)
 
     def check_lhs(self, name_diff_l):
         elems_moved = []
@@ -197,6 +180,30 @@ class Comparator(object):
                 self.files_by_name_l[name]['status'] = 'deleted'
                 elems_deleted.append(self.files_by_name_l[name])
         return (elems_moved, elems_deleted)
+
+    def check_rhs(self, name_diff_r):
+        elems_copied = []
+        elems_added = []
+        for name in name_diff_r:
+            digest_r = self.files_by_name_r[name]['digests'][self.best_digest]
+            # print("checking", name)
+            if digest_r in self.files_by_digest_l:
+                # print(name, digest_r)
+                # matched_elems = [elem['full_name'] for elem in self.files_by_digest_l[digest_r]]
+                # matched_names = ','.join(matched_elems)
+                # print("> COPIED  {} == {}".format(name, matched_names))
+                self.files_by_name_r[name]['status'] = 'copied'
+                for elem in self.files_by_digest_l[digest_r]:
+                    if elem['file_name'] == self.files_by_name_r[name]['file_name']:
+                        self.logger.info("------: Found likely source: %s", self.files_by_name_r[name]['full_name'])
+                        break
+                self.files_by_name_r[name]['match'] = self.files_by_digest_l[digest_r]
+                elems_copied.append(self.files_by_name_r[name])
+            else:
+                # print("> ADDED   {}".format(name))
+                self.files_by_name_r[name]['status'] = 'added'
+                elems_added.append(self.files_by_name_r[name])
+        return (elems_copied, elems_added)
 
     def compare(self, file_l, file_r):
         """ Main entry: compare two dirtreedigest reports """
@@ -222,8 +229,8 @@ class Comparator(object):
         name_same = name_set_r & name_set_l
 
         (elems_changed) = self.compare_by_full_names(name_same)
-        (elems_copied, elems_added) = self.check_rhs(name_diff_r)
         (elems_moved, elems_deleted) = self.check_lhs(name_diff_l)
+        (elems_copied, elems_added) = self.check_rhs(name_diff_r)
 
         for elem in sorted(elems_changed, key=lambda k: k['full_name']):
             self.logger.info(f"MOD   : \"{elem['full_name']}\"")

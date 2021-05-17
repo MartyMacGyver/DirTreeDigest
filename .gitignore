@@ -1,6 +1,7 @@
 # Misc
 .vscode/
 _local_files/
+dtdigest-cmp*
 
 
 # Byte-compiled / optimized / DLL files

@@ -87,6 +87,12 @@ At a higher level, the architecture is straightforward:
 
   - When all files are processed, cleanly shut down the subprocesses and exit
 
+## NOTES
+
+  Local testing:
+
+  `pip install . && dirtreecmp dirtreedigest\test\data_old.thd dirtreedigest\test\data_new.thd`
+
 ## TODO
 
   - ~~Workers slowly leak memory~~ shared_memory will leak on Windows if you keep calling it. Bug report?
