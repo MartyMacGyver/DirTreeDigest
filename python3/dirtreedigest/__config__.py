@@ -20,7 +20,7 @@ import logging
 
 PACKAGE_DATA = {
     'name': 'DirTreeDigest',
-    'version': '1.0.7',
+    'version': '1.0.8',
     'url': 'https://github.com/MartyMacGyver/DirTreeDigest',
     'author': 'Martin F. Falatic',
     'author_email': 'martin@falatic.com',

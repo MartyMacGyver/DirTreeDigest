@@ -21,10 +21,11 @@ import os
 import re
 import sys
 import time
+
 from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum
-
+from os.path import basename, dirname
 
 # Enums to communicate with subprocesses
 Cmd = Enum('Cmd', 'INIT PROCESS FREE RESULT QUIT')
@@ -162,3 +163,88 @@ def outfile_write(fname, fmode, lines):
     with open(fname, fmode, encoding='utf-8') as fileh:
         for line in lines:
             fileh.write('{}\n'.format(line))
+
+
+def read_dtd_report(filename, logger):
+    element_pat = re.compile(
+        r"^(.+?);{(.+?)};(.+?);(.+?);(.+?);(.+?);(.+?);(.+?);(.*)$")
+    legacy_pat = re.compile(
+        r"^(.+?);(.+?);(.+?);(.+?);(.+?);(.+?);(.*)$")
+    basepath_pat = re.compile(
+        r"^#\s+Base path:\s+(.*)$")
+    comment_pat = re.compile(
+        r"^\s*#\s*(.*)\s*$")
+    elements = []
+    basepath = ''
+    logger.info(f"READ  : {filename}")
+    with open(filename, 'r', encoding='utf-8') as fileh:
+        IS_LEGACY = None
+        MIXED_NONCE = True
+        for line in fileh:
+            line = line.rstrip('\n').lstrip()
+            if not line:
+                continue
+            elem = {}
+            mval = element_pat.match(line)
+            if mval:
+                if IS_LEGACY is None:
+                    IS_LEGACY = False
+                elif IS_LEGACY is True and MIXED_NONCE:
+                    logger.warning("Legacy format; skipping new formatted lines")
+                    MIXED_NONCE = False
+                    continue
+                elem['digests'] = {}
+                for digestpair in mval[2].split(','):
+                    (digest, val) = digestpair.strip().split(':')
+                    elem['digests'][digest.strip()] = val.strip()
+                elem['type'] = mval[1]
+                elem['atime'] = mval[3]
+                elem['mtime'] = mval[4]
+                elem['ctime'] = mval[5]
+                elem['attr_std'] = mval[6]
+                elem['attr_win'] = mval[7]
+                elem['size'] = mval[8]
+                elem['full_name'] = mval[9]
+                elem['dir_name'] = dirname(elem['full_name'])
+                elem['file_name'] = basename(elem['full_name'])
+            else:  # Legacy
+                mval = legacy_pat.match(line)
+                if mval:
+                    if IS_LEGACY is None:
+                        IS_LEGACY = True
+                    elif IS_LEGACY is False and MIXED_NONCE:
+                        logger.warning("New format; skipping legacy formatted lines")
+                        MIXED_NONCE = False
+                        continue
+                    elem['digests'] = {}
+                    elem['digests']['md5'] = mval[1]
+                    elem['type'] = 'F'
+                    if elem['digests']['md5'].startswith('?'):
+                        elem['type'] = '?'
+                    elif elem['digests']['md5'].startswith('-'):
+                        elem['type'] = 'D'
+                    elem['atime'] = mval[2]
+                    elem['mtime'] = mval[3]
+                    elem['ctime'] = mval[4]
+                    elem['attr_std'] = '0000'
+                    elem['attr_win'] = mval[5]
+                    elem['size'] = mval[6]
+                    elem['full_name'] = mval[7]
+                    elem['dir_name'] = dirname(elem['full_name'])
+                    elem['file_name'] = basename(elem['full_name'])
+                else:
+                    mval = basepath_pat.match(line)
+                    if mval:
+                        basepath = mval[1]
+                        logger.debug(f"Basepath: {(mval[1])}")
+                    else:
+                        mval = comment_pat.match(line)
+                        if mval:
+                            logger.debug(f"Comments: {(mval[1])}")
+            if elem:
+                if elem['type'] not in ['D', 'F']:
+                    logger.warning(f"Ignoring file type '{elem['type']}' for {elem['full_name']}")
+                else:
+                    elem['id'] = len(elements)
+                    elements.append(elem)
+    return (basepath, elements)

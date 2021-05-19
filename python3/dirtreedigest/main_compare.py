@@ -70,6 +70,7 @@ def validate_args(headline):
     control_data['logfile_level'] = logging.INFO
     if args.debug:
         control_data['logfile_level'] = logging.DEBUG
+        control_data['console_level'] = logging.DEBUG
 
     control_data['outfile_suffix'] = 'cmp'
 

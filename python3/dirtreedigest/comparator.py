@@ -17,14 +17,13 @@
 """
 
 import logging
-import re
 
 from collections import defaultdict
 from datetime import datetime
 from enum import Enum
-from os.path import basename, dirname
 
 import dirtreedigest.digester as dtdigester
+import dirtreedigest.utils as dtutils
 
 
 class DiffType(Enum):
@@ -50,66 +49,6 @@ class Comparator(object):
     def __init__(self, control_data):
         self.logger = logging.getLogger('comparator')
         self.control_data = control_data
-
-    def read_dtd_report(self, filename):
-        element_pat = re.compile(
-            r"^(.+?);{(.+?)};(.+?);(.+?);(.+?);(.+?);(.+?);(.+?);(.*)$")
-        legacy_pat = re.compile(
-            r"^(.+?);(.+?);(.+?);(.+?);(.+?);(.+?);(.*)$")
-        basepath_pat = re.compile(
-            r"^#\s+Base path:\s+(.*)$")
-        elements = []
-        basepath = ''
-        with open(filename, 'r', encoding='utf-8') as fileh:
-            for line in fileh:
-                line = line.rstrip('\n')
-                elem = {}
-                mval = element_pat.match(line)
-                if mval:
-                    elem['digests'] = {}
-                    for digestpair in mval[2].split(','):
-                        (digest, val) = digestpair.strip().split(':')
-                        elem['digests'][digest.strip()] = val.strip()
-                    elem['type'] = mval[1]
-                    elem['atime'] = mval[3]
-                    elem['mtime'] = mval[4]
-                    elem['ctime'] = mval[5]
-                    elem['attr_std'] = mval[6]
-                    elem['attr_win'] = mval[7]
-                    elem['size'] = mval[8]
-                    elem['full_name'] = mval[9]
-                    elem['dir_name'] = dirname(elem['full_name'])
-                    elem['file_name'] = basename(elem['full_name'])
-                else:  # Legacy
-                    mval = legacy_pat.match(line)
-                    if mval:
-                        elem['digests'] = {}
-                        elem['digests']['md5'] = mval[1]
-                        elem['type'] = 'F'
-                        if elem['digests']['md5'].startswith('?'):
-                            elem['type'] = '?'
-                        elif elem['digests']['md5'].startswith('-'):
-                            elem['type'] = 'D'
-                        elem['atime'] = mval[2]
-                        elem['mtime'] = mval[3]
-                        elem['ctime'] = mval[4]
-                        elem['attr_std'] = '0000'
-                        elem['attr_win'] = mval[5]
-                        elem['size'] = mval[6]
-                        elem['full_name'] = mval[7]
-                        elem['dir_name'] = dirname(elem['full_name'])
-                        elem['file_name'] = basename(elem['full_name'])
-                    else:
-                        mval = basepath_pat.match(line)
-                        if mval:
-                            basepath = mval[1]
-                if elem:
-                    if elem['type'] not in ['D', 'F']:
-                        self.logger.warning(f"Ignoring file type '{elem['type']}' for {elem['full_name']}")
-                    else:
-                        elem['id'] = len(elements)
-                        elements.append(elem)
-        return (basepath, elements)
 
     def choose_best_digest_for_compare(self, elems1, elems2):
         best = -1
@@ -207,8 +146,8 @@ class Comparator(object):
 
     def compare(self, file_l, file_r):
         """ Main entry: compare two dirtreedigest reports """
-        (self.basepath_l, self.elements_l) = self.read_dtd_report(file_l)
-        (self.basepath_r, self.elements_r) = self.read_dtd_report(file_r)
+        (self.basepath_l, self.elements_l) = dtutils.read_dtd_report(file_l, self.logger)
+        (self.basepath_r, self.elements_r) = dtutils.read_dtd_report(file_r, self.logger)
 
         self.logger.info("Root L: %s", self.basepath_l)
         self.logger.info("Root R: %s", self.basepath_r)
