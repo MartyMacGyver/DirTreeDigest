@@ -76,6 +76,9 @@ def validate_args(headline):
     parser.add_argument('--xdirs', dest='excluded_dirs', metavar='DIR1[,DIR2...]',
                         default=None, type=str, action='append',
                         help='excluded directories')
+    parser.add_argument('--update', dest='update_file', metavar='UPDATE',
+                        default=None, type=str, action='store',
+                        help='digest file to update')
     args = parser.parse_args()
 
     if not args.root:
@@ -85,6 +88,7 @@ def validate_args(headline):
     control_data['logfile_level'] = logging.INFO
     if args.debug:
         control_data['logfile_level'] = logging.DEBUG
+        control_data['console_level'] = logging.DEBUG
 
     control_data['root_dir'] = dtutils.unixify_path(os.path.realpath(args.root))
 
@@ -114,6 +118,8 @@ def validate_args(headline):
         output_tstamp,
         control_data['logfile_ext'],
     )
+
+    control_data['update_file'] = args.update_file
 
     dtutils.start_logging(
         control_data['logfile_name'],
@@ -244,6 +250,18 @@ def main():
     start_time = dtutils.curr_time_secs()
     logger.debug('MAINLINE starts - max_block_size=%d', control_data['max_block_size'])
     logger.debug('-;%s', dtdigester.fill_digest_str(control_data=control_data))
+
+    control_data['update_elements'] = {}
+    if control_data['update_file']:
+        file_u = control_data['update_file']
+        (basepath_u, elements_u) = dtutils.read_dtd_report(file_u, logger)
+        if not elements_u:
+            logger.warning('Update file had no data')
+        if not set(control_data['selected_digests']) >= set(elements_u[0]['digests'].keys()):
+            logger.error('Update file digests are not a subset of current digests!')
+            return False
+        control_data['update_elements'] = {x['full_name']: x for x in elements_u}
+
     walk_item = dtwalker.Walker()
     try:
         walk_item.initialize(control_data=control_data)

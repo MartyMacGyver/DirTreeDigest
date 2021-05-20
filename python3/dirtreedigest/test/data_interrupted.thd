@@ -1,0 +1,30 @@
+#------------------------------------------------------------------------------
+#
+#  Base path: X:/test_files/data_old
+#
+#------------------------------------------------------------------------------
+#         Digests               |accessT |modifyT |createT |attr|watr|   size   |relative name
+#------------------------------------------------------------------------------
+
+F;{md5: d41d8cd98f00b204e9800998ecf8427e, sha1: da39a3ee5e6b4b0d3255bfef95601890afd80709, sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855};60a0bbbb;60a0b5f6;60a0b5f6;81b6;0020;0000000000;file_empty
+D;{md5: --------------------------------, sha1: ----------------------------------------, sha256: ----------------------------------------------------------------};60a0cade;60a0cac7;60a0b5d6;41ff;0030;0000000000;folder_1
+F;{md5: 933222b19ff3e7ea5f65517ea1f7d57e, sha1: 764c16af46dd4f15edb05ecc5595b50cbe3714ea, sha256: 8e4621379786ef42a4fec155cd525c291dd7db3c1fde3478522f4f61c03fd1bd};60a0cab2;60a0bd14;60a0b603;81b6;0020;0000000003;folder_1/file__a_same
+F;{md5: c5053d4da03789bfbc4bee760fade936, sha1: 854d675a26dc0254a07b5725ba71242555863eb5, sha256: 679e273f78fc8f8ba114db23c2dce80cc77c91083939825ca830152f2f080d08};60a0cab3;60a0bd14;60a0bb75;81b6;0020;0000000003;folder_1/file__b_diff_data
+F;{md5: fa1f726044eed39debea9998ab700388, sha1: 4052402ba9118e4b5222aad52b7c87e949382b22, sha256: ef1fac987a48a7c02176f7e1c2d0e5cbda826c9558290ba153c90ea16d5d5a96};60a0ca9d;60a0bd14;60a0bb75;81b6;0020;0000000003;folder_1/file__c_diff_mtime
+F;{md5: e62a48441308d0d15ba98767042630ca, sha1: 73bf5c15a493807885746b45d3512a49deb4b7eb, sha256: 6f9047eb742efc9d495c531e3cdd11c87b420b5913dee4e2893c6cf095395d16};60a0ca9f;60a0bd14;60a0b633;81b6;0020;0000000003;folder_1/file__d_diff_attrs
+F;{md5: ba73ad5fc2ed01c25a420738836e432d, sha1: c7b82e264bfc6fc76696100258a7eeade8175f66, sha256: 780b590e823368f04ff6782eee4e506bd5f504460cf797c02180b4569a64cd03};60a0caa0;60a0bd14;60a0bcaa;81b6;0020;0000000003;folder_1/file__e_diff_data_mtime
+F;{md5: 7b61d2313db5cbe1c59ab9c29d8b6aaf, sha1: 71576bb663a1d8ed5168f05599990ceafda25d8b, sha256: 12862f6e181922c4b652768cf8d4128626b83631b1990e9b8df54be2b725bc5d};60a0cabb;60a0bd15;60a0bcaa;81b6;0020;0000000003;folder_1/file__f_moved
+
+F;{md5: f1a9c96632f86e78712d7e670609fc25, sha1: 88133728be62365cd118ea3ed34b4156c6a9da80, sha256: a358c117a37095124fae3e07deda5e862dab4f4d0ad5d28d41a26fd8c473a158};60a0cabb;60a0caa7;60a0c93c;81b6;0020;0000000003;folder_1/file__h_removed
+F;{md5: 6049d6013872759678435a04b1e0c4c0, sha1: 3b7ef90a7908a832dc925e2941329d8c16912928, sha256: d0227562fcbbaa97353d9722b3cfb50ae37b5bfcc4b2060381404f0dd071b6b1};60a0cad4;60a0cad3;60a0cabb;81b6;0020;0000000003;folder_1/file__i_two_to_one
+F;{md5: 660a8e81080182ca96201a94ce72b1c2, sha1: b84ca5a9daa2c9e3e56dafc30eb8b44727adb2d7, sha256: fe33abbacce1758894544f75231323867fff7aac490ec9dae234a5637749f260};60a0cad9;60a0cad8;60a0cabb;81b6;0020;0000000003;folder_1/file__j_one_to_two
+F;{md5: 1ffb5d63545e61376316d6bdf4ac4109, sha1: 01b8c5a0a71f61b1670032b6bbe9d234d3278e47, sha256: fd3bae74e9dfe1304c334f1e390a794411582ffaf782fae3577136cf16d31ab1};60a0cadc;60a0cadc;60a0cabb;81b6;0020;0000000003;folder_1/file__k
+F;{md5: 7009b1f453cee28102a3f1e2be9d210e, sha1: 7cf67ae86492cbea6d4a9141433302f93d026d59, sha256: dedecbb3ef597a9fc68590dda5a19bff024a17c3b345a4bfbe1fa1810eb37539};60a0caab;60a0caaa;60a0c9cf;81b6;0020;0000000003;folder_1/file__w
+F;{md5: cb30fc9cec9a2d04ef49b22e2066c264, sha1: b57bc04cd1994067ff0f49c776e5f7553d3aeed4, sha256: b35e09fa2ced9ebcad9d16336fb961146fe34bfbebc562679da85f8a314c9dca};60a0caac;60a0b6a9;60a0bb75;81b6;0020;0000000003;folder_1/file__x
+F;{md5: dfda6361a5637a57cbffd42f1749ef5f, sha1: 9356278188dd05b4d6b59fde1520f21a88e926d1, sha256: 800b87f104390f5654b4fe07fbba8a39f17555153b03db728b69bf1b66bd7b65};60a0caaf;60a0bd15;60a0bba0;81b6;0020;0000000003;folder_1/file__y
+?;{md5: 4e4afb73087d58a0363be716fee010c9, sha1: 69802802e4918481ea7f6ede2b0773181fce5f15, sha256: ae7c791a527d756a15cdb11de8c13feefd266a81ea9671d3e65f1e7da00e2e5e};60a0cab0;60a0bd15;60a0bba7;81b6;0020;0000000003;folder_1/file__z_unreadable
+D;{md5: --------------------------------, sha1: ----------------------------------------, sha256: ----------------------------------------------------------------};60a0bd68;60a0bcb6;60a0b5d6;41ff;0030;0000000000;folder_2
+F;{md5: 6049d6013872759678435a04b1e0c4c0, sha1: 3b7ef90a7908a832dc925e2941329d8c16912928, sha256: d0227562fcbbaa97353d9722b3cfb50ae37b5bfcc4b2060381404f0dd071b6b1};60a0cad4;60a0cad3;60a0cabb;81b6;0
+F;{md5: 6049d6013872759678435a04b1e0c4c0, sha1: 3b7ef90a7908a832dc925e2941329d8c16912928, sha256: d0227562fcbbaa97353d9722b3cfb50ae37b5bfcc4b2060381404f0dd071b6b1};
+F;{md5: 6049d6013872759678435a04b1e0c4c0, sha1: 3b7ef90a7908a832dc925e2941329d8c1691292
+F;{md5

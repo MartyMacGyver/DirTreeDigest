@@ -225,10 +225,8 @@ class Walker(object):
             self.logger.warning('PermissionError %s', root_dir)
             control_data['counts']['errors'] += 1
             return
-        print("Processing path {}".format(root_dir))
         for elem in sorted(dir_list):
             pathname = dtutils.unixify_path(os.path.join(root_dir, elem))
-            # print("Processing file {}".format(pathname))
             try:
                 stats = os.lstat(pathname)
             except FileNotFoundError:
@@ -266,6 +264,9 @@ class Walker(object):
         """ Stat / digest a specific element found during the directory walk """
         root_dir = control_data['root_dir']
         elem_data = {}
+        relname = dtutils.get_relative_path(control_data['root_dir'], dtutils.unixify_path(element))
+        self.logger.debug("Processing element {}".format(relname))
+
         elem_data['name'] = dtutils.get_relative_path(root_dir, dtutils.unixify_path(element))
         elem_data['mode'] = stats.st_mode
         if sys.platform == 'win32':
@@ -281,9 +282,10 @@ class Walker(object):
         alt_digest_len = 1
         if control_data['altfile_digest']:
             alt_digest_len = dtdigester.DIGEST_FUNCTIONS[control_data['altfile_digest']]['len']
+
         if sys.platform == 'win32' and self.is_win_symlink(element):
             elem_data['type'] = 'J'
-            alt_digest = '?' * alt_digest_len
+            alt_digest = 'x' * alt_digest_len
             sorted_digests = dtdigester.fill_digest_str(control_data, 'x')
         elif stat.S_ISDIR(stats.st_mode):
             elem_data['type'] = 'D'
@@ -293,7 +295,29 @@ class Walker(object):
             control_data['counts']['dirs'] += 1
         elif stat.S_ISREG(stats.st_mode):
             elem_data['type'] = 'F'
-            elem_data['digests'] = dtdigester.digest_file(control_data, element)
+        else:
+            elem_data['type'] = '?'
+            sorted_digests = dtdigester.fill_digest_str(control_data, '?')
+
+        SAME_METADATA = False
+        if relname in control_data['update_elements']:
+            self.logger.debug("Found existing element {}".format(relname))
+            existing = control_data['update_elements'][relname]
+            if (
+                (elem_data['type'] == existing['type']) and
+                (elem_data['size'] == int(existing['size'], 16)) and
+                (elem_data['mode'] == int(existing['attr_std'], 16)) and
+                (elem_data['mtime'] == int(existing['mtime'], 16))
+               ):
+                SAME_METADATA = True
+                self.logger.debug("SAME_METADATA {}".format(relname))
+
+        if elem_data['type'] == 'F':
+            if SAME_METADATA:
+                elem_data['digests'] = existing['digests']
+            else:
+                elem_data['digests'] = dtdigester.digest_file(control_data, element)
+
             if elem_data['digests']:
                 control_data['counts']['files'] += 1
                 sorted_digests = '{' + ', '.join('{}: {}'.format(
@@ -306,9 +330,7 @@ class Walker(object):
                 control_data['counts']['errors'] += 1
                 sorted_digests = dtdigester.fill_digest_str(control_data, '!')
                 alt_digest = '!' * alt_digest_len
-        else:
-            elem_data['type'] = '?'
-            sorted_digests = dtdigester.fill_digest_str(control_data, '?')
+
         file_details = '{};{};{:08x};{:08x};{:08x};{:04x};{:04x};{:010x};{}'.format(
             elem_data['type'],
             sorted_digests,

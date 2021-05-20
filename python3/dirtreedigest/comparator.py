@@ -91,12 +91,12 @@ class Comparator(object):
                 if self.files_by_name_l[name]['mtime'] != self.files_by_name_r[name]['mtime']:
                     time_l = datetime.fromtimestamp(int("0x"+self.files_by_name_l[name]['mtime'], 16))
                     time_r = datetime.fromtimestamp(int("0x"+self.files_by_name_r[name]['mtime'], 16))
-                    self.logger.info("SAME-T: %ss: %s", int((time_r - time_l).total_seconds()), name)
+                    self.logger.info("SAME-T: %ss: \"%s\"", int((time_r - time_l).total_seconds()), name)
             else:
                 self.files_by_name_l[name]['status'] = 'changed'
                 self.files_by_name_r[name]['status'] = 'changed'
                 if self.files_by_name_l[name]['mtime'] == self.files_by_name_r[name]['mtime']:
-                    self.logger.info("MOD-T : %s", name)
+                    self.logger.info("MOD-T : \"%s\"", name)
                 elems_changed.append(self.files_by_name_r[name])
         return (elems_changed)
 
@@ -134,7 +134,7 @@ class Comparator(object):
                 self.files_by_name_r[name]['status'] = 'copied'
                 for elem in self.files_by_digest_l[digest_r]:
                     if elem['file_name'] == self.files_by_name_r[name]['file_name']:
-                        self.logger.info("------: Found likely source: %s", self.files_by_name_r[name]['full_name'])
+                        self.logger.info("------: Found likely source: \"%s\"", self.files_by_name_r[name]['full_name'])
                         break
                 self.files_by_name_r[name]['match'] = self.files_by_digest_l[digest_r]
                 elems_copied.append(self.files_by_name_r[name])
