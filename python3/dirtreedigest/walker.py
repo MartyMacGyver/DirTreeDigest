@@ -238,9 +238,11 @@ class Walker(object):
                         root_dir,
                         pathname,
                         control_data['ignored_dir_pats']):
-                    self.logger.info('D IGNORED %s', pathname)
+                    self.logger.info(f'D IGNORED: {pathname}')
                     control_data['counts']['ignored'] += 1
                     continue
+                else:
+                    self.logger.info(f'D WALKING: {pathname}')
                 results.append(self.visit_element(control_data, pathname, stats))
                 self._walk_tree(
                     control_data=control_data,
@@ -252,7 +254,7 @@ class Walker(object):
                         root_dir,
                         pathname,
                         control_data['ignored_file_pats']):
-                    self.logger.info('F IGNORED %s', pathname)
+                    self.logger.info(f'F IGNORED: {pathname}')
                     control_data['counts']['ignored'] += 1
                     continue
                 results.append(self.visit_element(control_data, pathname, stats))

@@ -92,12 +92,17 @@ At a higher level, the architecture is straightforward:
   Local testing:
 
   `pip install . && dirtreecmp dirtreedigest\test\data_old.thd dirtreedigest\test\data_new.thd`
+  `pip install . && dirtreedigest ..\_local_files\test_files\data_old --title data_test --tstamp 0`
+  `pip install . && dirtreedigest ..\_local_files\test_files\data_old --title tester --digests sha512 --tstamp 0 --update dirtreedigest\test\data_interrupted.thd --debug`
+  `pip install . && dirtreedigest ..\_local_files\test_files\data_old --title tester --tstamp 0 --update dirtreedigest\test\data_interrupted.thd --debug`
 
 ## TODO
 
   - ~~Workers slowly leak memory~~ shared_memory will leak on Windows if you keep calling it. Bug report?
+  - Handle timezone changes if comparing timestamps?
+  - Attribute checks
+  - Add file/element count to output even if just updating
   - Handle SIGINT better!
-  - Continue/refresh capability!
   - Comma-delimited includes / excludes aren't working right - allow that? Remove that? Seems more trouble than its worth to allow
   - Debug queue always says 'worker'
   - Is there any good way to get timestamping aligned nicely without rewriting the log?

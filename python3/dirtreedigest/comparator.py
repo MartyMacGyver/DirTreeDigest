@@ -88,14 +88,14 @@ class Comparator(object):
             if digest_l == digest_r:
                 self.files_by_name_l[name]['status'] = 'same'
                 self.files_by_name_r[name]['status'] = 'same'
-                if self.files_by_name_l[name]['mtime'] != self.files_by_name_r[name]['mtime']:
+                if not self.control_data['notimestamps'] and self.files_by_name_l[name]['mtime'] != self.files_by_name_r[name]['mtime']:
                     time_l = datetime.fromtimestamp(int("0x"+self.files_by_name_l[name]['mtime'], 16))
                     time_r = datetime.fromtimestamp(int("0x"+self.files_by_name_r[name]['mtime'], 16))
                     self.logger.info("SAME-T: %ss: \"%s\"", int((time_r - time_l).total_seconds()), name)
             else:
                 self.files_by_name_l[name]['status'] = 'changed'
                 self.files_by_name_r[name]['status'] = 'changed'
-                if self.files_by_name_l[name]['mtime'] == self.files_by_name_r[name]['mtime']:
+                if not self.control_data['notimestamps'] and self.files_by_name_l[name]['mtime'] == self.files_by_name_r[name]['mtime']:
                     self.logger.info("MOD-T : \"%s\"", name)
                 elems_changed.append(self.files_by_name_r[name])
         return (elems_changed)
